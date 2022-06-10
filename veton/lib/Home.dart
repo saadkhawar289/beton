@@ -42,7 +42,8 @@ class _HomeState extends State<Home> {
     super.initState();
     searchleadList=leadList;
 
-    if (Platform.isIOS) setStream();
+    //if (Platform.isIOS)
+      setStream();
     permission();
   }
   void permission()async{
