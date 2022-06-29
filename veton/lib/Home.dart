@@ -1,11 +1,15 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
-
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:veton/CallData.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -15,10 +19,42 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-
+void loadData()async{
+  final prefs = await SharedPreferences.getInstance();
+}
 
   PhoneStateStatus status = PhoneStateStatus.NOTHING;
   bool granted = false;
+
+
+  Future<void> getLeads()async{
+    print('in');
+    var baseUrl = 'http://44.203.240.206:5000/lead/mobile?assignedto=';
+    var url = Uri.parse('$baseUrl+6289ec2a894e709193eb14e9');
+    var response = await http.get(url,
+
+        headers: {"content-type": "application/json"});
+
+    final Map<String, dynamic> productData = jsonDecode(response.body);
+    print(productData);
+    if (response.statusCode != 200) {
+      print('error code ye h===== ${response.statusCode}');
+    //   message = productData['data'];
+    //   Fluttertoast.showToast(
+    //       msg: message,
+    //       toastLength: Toast.LENGTH_SHORT,
+    //       gravity: ToastGravity.BOTTOM,
+    //       backgroundColor: Colors.grey,
+    //       textColor: Colors.white,
+    //       fontSize: 16.0);
+    // } else {
+Map<String,dynamic> myData=json.decode(response.body);
+      print(myData['_id']);
+
+
+    }
+  }
+
 
   Future<bool>  requestPermission() async {
     print('inpermission');
@@ -81,7 +117,7 @@ class _HomeState extends State<Home> {
     });
   }
 
-
+int x=0;
   TextEditingController searchController = TextEditingController();
   List<LeadModel> leadList=[
     LeadModel(number: '03131533387', name: 'Saad'),
@@ -131,12 +167,24 @@ return leadtile.contains(input);
                       children:  [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children:const [
+                          children: [
                             CircleAvatar(
                               radius: 39,
                               //    backgroundImage: AssetImage(('assets/images/images.png')),
                             ),
-                            Icon(Icons.power_settings_new,size: 30,color: Colors.amber,)
+                            InkWell(
+                                onTap: ()async{
+                               await   getLeads();
+                                  setState(() {
+
+                                  });
+                                },
+                                child: Column(
+                                  children: [
+                                    Text(x.toString()),
+                                    Icon(Icons.power_settings_new,size: 30,color: Colors.amber,),
+                                  ],
+                                ))
                           ],
                         ),
                         const Text(
