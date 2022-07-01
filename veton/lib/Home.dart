@@ -78,7 +78,8 @@ Map<String,dynamic> myData=json.decode(response.body);
     super.initState();
     searchleadList=leadList;
 
-    if (Platform.isIOS) setStream();
+    //if (Platform.isIOS)
+      setStream();
     permission();
   }
   void permission()async{
