@@ -49,10 +49,31 @@ void loadData()async{
     //       fontSize: 16.0);
     // } else {
 Map<String,dynamic> myData=json.decode(response.body);
-      print(myData['_id']);
+// myData.forEach((key, value) {
+//   print(value['data']['client']['id']);
+// });
+    var x=  myData.forEach((String a,dynamic b) {
+      print('444');
+      print(a[0]);
+      print(b);
+
+    });
 
 
+// print(myData[""]);
     }
+  }
+  void practice(){
+String myName='3131533387';
+int phone=22222;
+double decimal=2.2;
+bool myChoice=false;
+double a=20.2;
+int b=20;
+double result=0;
+result=a+b;
+print(result);
+
   }
 
 
@@ -177,7 +198,7 @@ return leadtile.contains(input);
                                 onTap: ()async{
                                await   getLeads();
                                   setState(() {
-
+                                    practice();
                                   });
                                 },
                                 child: Column(
