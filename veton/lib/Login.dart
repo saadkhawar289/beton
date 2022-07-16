@@ -13,27 +13,26 @@ import 'package:http/http.dart' as http;
 final users = {'ss@ss.com': '12345'};
 
 class LoginScreen extends StatelessWidget {
-  // final HydratedStorage storage;
-  // LoginScreen(this.storage);
+
 
   Duration get loginTime => Duration(milliseconds: 2250);
 
   Future<String> _authUser(LoginData data) async{
-//     var baseUrl = 'http://44.203.240.206:5000/user/signin';
-//     var url = Uri.parse(baseUrl);
-//    print('in');
-//     var response = await http.post(url,
-//         body: json.encode(
-//           {
-//             "email": 'rehankhalid@gmail.com',
-//             "password": 'TeamLead123!',
-//           },
-//         ),
-//         headers: {"content-type": "application/json"});
-// print('out');
-//     final Map<String, dynamic> productData = jsonDecode(response.body);
-//
-// print(productData);
+    var baseUrl = 'http://44.203.240.206:5000/user/signin';
+    var url = Uri.parse(baseUrl);
+   print('in');
+    var response = await http.post(url,
+        body: json.encode(
+          {
+            "email": 'rehankhalid@gmail.com',
+            "password": 'TeamLead123!',
+          },
+        ),
+        headers: {"content-type": "application/json"});
+print('out');
+    final Map<String, dynamic> productData = jsonDecode(response.body);
+
+print(productData);
 // if(productData['message']=='User Not Registered'){
 //   print('no loggin');
 //
@@ -79,7 +78,8 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FlutterLogin(
-      logo: 'assets/images/SimpySwap-03-(White Version).png',
+
+      logo: 'assets/logo.png',
       onLogin: _authUser,
      // onSignup: _onSubmitUser,
       onSubmitAnimationCompleted: () {

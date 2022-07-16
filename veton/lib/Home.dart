@@ -235,7 +235,7 @@ class _HomeState extends State<Home> {
             getCallLogs();
 
             showDialog(
-              barrierColor: Colors.grey[100],
+             // barrierColor: Colors.grey[100],
               barrierDismissible: false,
               context: context,
               builder: (ctx) {
@@ -243,16 +243,19 @@ class _HomeState extends State<Home> {
                   Navigator.of(context).pop();
                 });
                 return AlertDialog(
+                  insetPadding: EdgeInsets.all(40),
+
                   elevation: 100,
                   shape: const RoundedRectangleBorder(
                       side: BorderSide.none,
+
                       borderRadius: BorderRadius.all(Radius.circular(15.0))),
                   title: Center(
                       child: Image.asset("assets/taskImg.png",
                           width: 80, height: 90)),
                   content: Container(
                       height: 80,
-                      width: 80,
+                      width: 30,
                       child: Center(
                           child: Column(
                         children: [
@@ -301,8 +304,8 @@ class _HomeState extends State<Home> {
 
   void searchLead(String query) {
     final suggestion = searchLeadList.where((lead) {
-      final leadtile = lead.name.toLowerCase();
-      final input = searchController.text.toLowerCase();
+      final leadtile = lead.name.toUpperCase();
+      final input = searchController.text.toUpperCase();
       return leadtile.contains(input);
     }).toList();
     setState(() {
@@ -332,14 +335,14 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.blueAccent,
+      color: currentIndex==0? Colors.blueAccent:Colors.blue[900],
       child: SafeArea(
         child: Scaffold(
           resizeToAvoidBottomInset: false,
           body: Container(
             height: MediaQuery.of(context).size.height,
             width: MediaQuery.of(context).size.width,
-            color: Colors.blueAccent,
+            color:currentIndex==0? Colors.blueAccent:Colors.blue[900],
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -372,7 +375,7 @@ class _HomeState extends State<Home> {
                                           color: Colors.white,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.grey!,
+                                              color: Colors.grey,
                                               offset: const Offset(0.0, 0.0),
                                               blurRadius: 9.0,
                                               spreadRadius: 4.0,
@@ -419,7 +422,7 @@ class _HomeState extends State<Home> {
                               topRight: Radius.circular(30))),
                       child: DefaultTabController(
                           length: 2,
-                          animationDuration: Duration(seconds: 1),
+                          animationDuration: const Duration(seconds: 1),
                           initialIndex: currentIndex,
                           child: Column(
                             children: [
@@ -428,7 +431,7 @@ class _HomeState extends State<Home> {
                                 onTap: (index){
                                   setState(() {
                                     currentIndex=index;
-                                    tabIndicator=currentIndex==0?'Assigned Leads':'EditProfile';
+                                    tabIndicator=currentIndex==0?'Assigned Leads':'Edit Profile';
                                   });
                                 },
                                 labelPadding: EdgeInsets.only(top: 10),
@@ -439,6 +442,8 @@ class _HomeState extends State<Home> {
                                     color: Colors.blueAccent,
                                     fontSize: 17),
                                 indicatorSize: TabBarIndicatorSize.tab,
+isScrollable: false,
+
                                 tabs: [
                                   Tab(
                                     text: 'Assigned Leads',
@@ -450,7 +455,7 @@ class _HomeState extends State<Home> {
                               ),
                               Container(
                                 height:
-                                    MediaQuery.of(context).size.height * 0.61,
+                                    MediaQuery.of(context).size.height * 0.60,
                                 width: double.infinity,
                                 child: TabBarView(
                                   children: [
@@ -458,10 +463,10 @@ class _HomeState extends State<Home> {
                                       child: Column(
                                         children: [
                                           const SizedBox(
-                                            height: 10,
+                                            height: 15,
                                           ),
                                           Container(
-                                            height: 40,
+
                                               width: MediaQuery.of(context)
                                                       .size
                                                       .width *
@@ -482,8 +487,7 @@ class _HomeState extends State<Home> {
                                                     suffixIcon: GestureDetector(
                                                         onTap: () {
                                                           setState(() {
-                                                            searchLeadList =
-                                                                leadList;
+                                                            searchLeadList = leadList;
                                                             searchController
                                                                 .clear();
                                                           });
@@ -506,6 +510,8 @@ class _HomeState extends State<Home> {
                                               child: RefreshIndicator(
                                                 key: _refreshIndicatorKey,
                                                 onRefresh: () async {
+                                                  leadList.clear();
+                                                  searchLeadList.clear();
                                                   getLeads();
                                                 },
                                                 child: loading
@@ -517,7 +523,7 @@ class _HomeState extends State<Home> {
                                                                 const CircularProgressIndicator()))
                                                     : ListView.builder(
                                                         itemCount:
-                                                            searchLeadList
+                                                            leadList
                                                                 .length,
                                                         itemBuilder:
                                                             (BuildContext
@@ -528,7 +534,7 @@ class _HomeState extends State<Home> {
                                                                 const EdgeInsets
                                                                         .symmetric(
                                                                     horizontal:
-                                                                        23.0,
+                                                                        18.0,
                                                                     vertical:
                                                                         10),
                                                             child: LeadTile(
@@ -598,60 +604,63 @@ class _LeadTileState extends State<LeadTile> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                radius: 30,
-                backgroundImage: NetworkImage(
-                    'https://cutewallpaper.org/24/avatar-icon-png/1240-x-1240-0-avatar-profile-icon-png-transparent-png-transparent-png-image-pngitem.png'),
-              ),
-              const SizedBox(
-                width: 20,
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(
-                    height: 5,
-                  ),
-                  Text(widget.number,
-                      style: const TextStyle(color: Colors.green)),
-                  const SizedBox(
-                    height: 5,
-                  ),
-                  Text(widget.intrestedIn,
-                      style: const TextStyle(color: Colors.red))
-                ],
-              ),
-              const Spacer(),
-              CircleAvatar(
-                child: InkWell(
-                    onTap: () async {
-                      // launch('tel://03131533387'),
-                      await Permission.phone.request();
-                      var completeNum = '0${widget.number}';
-                      await FlutterPhoneDirectCaller.callNumber(completeNum);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Container(
+        color: Colors.white,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 30,
+                  backgroundImage: NetworkImage(
+                      'https://cutewallpaper.org/24/avatar-icon-png/1240-x-1240-0-avatar-profile-icon-png-transparent-png-transparent-png-image-pngitem.png'),
+                ),
+                const SizedBox(
+                  width: 20,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.name.toUpperCase(),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    Text('+92${widget.number}',
+                        style: const TextStyle(color: Colors.green)),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    Text(widget.intrestedIn,
+                        style: const TextStyle(color: Colors.red))
+                  ],
+                ),
+                const Spacer(),
+                CircleAvatar(
+                  child: InkWell(
+                      onTap: () async {
+                        // launch('tel://03131533387'),
+                        await Permission.phone.request();
+                        var completeNum = '0${widget.number}';
+                        await FlutterPhoneDirectCaller.callNumber(completeNum);
 
-                      // LaunchCall(widget.number),
-                    },
-                    child: const Icon(
-                      Icons.call,
-                      color: Colors.yellowAccent,
-                      size: 30,
-                    )),
-              )
-            ],
-          ),
-        ],
+                        // LaunchCall(widget.number),
+                      },
+                      child: const Icon(
+                        Icons.call,
+                        color: Colors.amberAccent,
+                        size: 30,
+                      )),
+                )
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
