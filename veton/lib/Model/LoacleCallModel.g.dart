@@ -17,20 +17,23 @@ class LocalStorageCallsAdapter extends TypeAdapter<LocalStorageCalls> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return LocalStorageCalls()
-      ..totalLength = fields[0] as int
+      ..totalLength = fields[0] as String
       ..isVerified = fields[1] as bool
-      ..clientId = fields[2] as String;
+      ..employeeId = fields[2] as String
+      ..clientId = fields[3] as String;
   }
 
   @override
   void write(BinaryWriter writer, LocalStorageCalls obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.totalLength)
       ..writeByte(1)
       ..write(obj.isVerified)
       ..writeByte(2)
+      ..write(obj.employeeId)
+      ..writeByte(3)
       ..write(obj.clientId);
   }
 

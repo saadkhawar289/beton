@@ -11,92 +11,98 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:veton/ClientModel.dart';
+import 'package:veton/Model/CallModel.dart';
 import 'package:veton/Model/LoacleCallModel.dart';
 import 'package:call_log/call_log.dart';
 import 'package:intl/intl.dart';
 
-
-
 class Home extends StatefulWidget {
+  const Home({Key? key}) : super(key: key);
+
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  DateTime? startingTime;
-  DateTime? endingTime;
-
-  int x = 0;
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
+  String tabIndicator = 'Assigned Leads';
+  int currentIndex=0;
   bool hasInternet = false;
+  bool dataSendLoading = false;
   late StreamSubscription subscription;
   TextEditingController searchController = TextEditingController();
   String query = '';
-  List<LeadModel> leadList = <LeadModel>[
-    LeadModel(number: '03335684680', name: 'saad'),
-    LeadModel(number: '3322', name: 'zain'),
-    LeadModel(number: '00000', name: 'waleed'),
-    LeadModel(number: '2233', name: 'haroon'),
-    LeadModel(number: '3322', name: 'ayesha'),
-    LeadModel(number: '00000', name: 'maaz'),
-    LeadModel(number: '3322', name: 'rizwana'),
-    LeadModel(number: '3322', name: 'khawar'),
-    LeadModel(number: '3322', name: 'ttt'),
-  ];
-  List<LeadModel> searchleadList = <LeadModel>[];
-  bool listChoice = false;
+  List<LeadModel> leadList = <LeadModel>[];
+  List<LeadModel> searchLeadList = <LeadModel>[];
   bool loading = true;
-
-
   PhoneStateStatus status = PhoneStateStatus.NOTHING;
   bool granted = false;
-  Iterable<CallLogEntry> lst=[];
 
-
-  void getCallLogs()async{
-
+  void getCallLogs() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    String clientNum = preferences.getString('ClientPhoneNo')??'0';
     Iterable<CallLogEntry> entries = await CallLog.get();
-   var xx= entries.first;
-   if(xx.number.toString()==clientNum){
-     print('send this call');
-   }
-   else{
-print('nothing');
-   }
-   // print(xx.name);
-   //  print(xx.number);
-   //  print(getTime(xx.duration!));
-   //  print(formatDate( DateTime.fromMillisecondsSinceEpoch(xx.timestamp!)));
+    var singleCallLog = entries.first;
+    List<LocalStorageCalls> sendingList = [];
+    bool isVerified = false;
+    String clientNum = preferences.getString('ClientPhoneNo') ?? '0';
+    String employeeID = preferences.getString('employeeID') ?? '0';
+    String duration = singleCallLog.duration.toString();
+    String clientID = preferences.getString('clientID') ?? '0';
+    String completeNum = '0$clientNum';
 
+    if (singleCallLog.number.toString() == completeNum) {
+      singleCallLog.duration! >= 20 ? isVerified = true : isVerified = false;
+      var tempCallData = LocalStorageCalls()
+        ..clientId = clientID
+        ..isVerified = isVerified
+        ..totalLength = duration
+        ..employeeId = employeeID;
 
+      sendingList.add(tempCallData);
+      dataManagingBlock(sendingList);
+    } else {
+      return;
+    }
   }
 
-  String formatDate(DateTime dt){
+  void dataManagingBlock(List<LocalStorageCalls> listOfCalls) {
+    if (hasInternet) {
+      sendDataToServer(listOfCalls);
+    } else {
+      var singleCallData = listOfCalls.first;
+      addCallDataToDB(singleCallData.totalLength, singleCallData.isVerified,
+          singleCallData.clientId, singleCallData.employeeId);
+    }
+  }
 
+  String formatDate(DateTime dt) {
     return DateFormat('d-MMM-y H:m:s').format(dt);
   }
 
-  String getTime(int duration){
+  String getTime(int duration) {
     Duration d1 = Duration(seconds: duration);
     String formatedDuration = "";
-    if(d1.inHours > 0){
+    if (d1.inHours > 0) {
       formatedDuration += d1.inHours.toString() + "h ";
     }
-    if(d1.inMinutes > 0){
+    if (d1.inMinutes > 0) {
       formatedDuration += d1.inMinutes.toString() + "m ";
     }
-    if(d1.inSeconds > 0){
+    if (d1.inSeconds > 0) {
       formatedDuration += d1.inSeconds.toString() + "s";
     }
-    if(formatedDuration.isEmpty)
-      return "0s";
+    if (formatedDuration.isEmpty) return "0s";
     return formatedDuration;
   }
 
   ///......server functions to fetch and send
   Future<ClientModel> getLeads() async {
-    print('in');
+    setState(() {
+      loading = true;
+      leadList.clear();
+      searchLeadList.clear();
+    });
     var baseUrl = 'http://44.203.240.206:5000/lead/mobile?assignedto=';
     var url = Uri.parse('$baseUrl+6289ec2a894e709193eb14e9');
     var response =
@@ -106,49 +112,39 @@ print('nothing');
     if (response.statusCode != 200) {
       print('error code ye h===== ${response.statusCode}');
       return ClientModel.fromJson(productData);
-
-// print(myData[""]);
     } else {
       for (var value in ClientModel.fromJson(productData).data!) {
-        //var client=LeadModel(number: value.client!.phone.toString(), name: value.client!.name.toString());
-        // print(value.client!.phone);
-        // // leadList.add(client);
-        // // searchleadList.add(client);
+        var client = LeadModel(
+            number: value.client!.phone.toString(),
+            name: value.client!.name.toString(),
+            id: value.client!.id.toString(),
+            projectName: value.intrested!.project!);
+
+        leadList.add(client);
+        searchLeadList.add(client);
       }
-      print('{leadList lenght=================}${leadList.length}');
-      print('{leadList lenght=================}${searchleadList.length}');
-
+      setState(() {
+        loading = false;
+      });
       return ClientModel.fromJson(productData);
-    }
-  }
-
-  Future<bool> sendLocaleDataToServer(List<LocalStorageCalls> callsData) async {
-    var baseUrl = 'http://44.203.240.206:5000/user/signin';
-    var url = Uri.parse(baseUrl);
-
-    var response = await http.post(url,
-        body: json.encode(
-          {
-            "callRecord": callsData,
-          },
-        ),
-        headers: {"content-type": "application/json"});
-
-    if (response.statusCode != 200) {
-      return false;
-    } else {
-      return true;
     }
   }
 
   Future<bool> sendDataToServer(List<LocalStorageCalls> callsData) async {
     var baseUrl = 'http://44.203.240.206:5000/user/signin';
     var url = Uri.parse(baseUrl);
-
+    List<CallModel> list = [];
+    var callData = callsData.first;
+    var callRec = CallModel(
+        totalLength: callData.totalLength,
+        employeeId: callData.employeeId,
+        clientId: callData.clientId,
+        isVerified: callData.isVerified);
+    list.add(callRec);
     var response = await http.post(url,
         body: json.encode(
           {
-            "callRecord": callsData,
+            "callRecord": list,
           },
         ),
         headers: {"content-type": "application/json"});
@@ -160,15 +156,13 @@ print('nothing');
     }
   }
 
-
-
-
   ///.... save calls data to locale DB and get data from locale DB
-  Future addCallDataToDB(
-      int totalLength, bool isVerified, String clientIds) async {
+  Future addCallDataToDB(String totalLength, bool isVerified, String clientIds,
+      String employeeIds) async {
     var callData = LocalStorageCalls()
       ..totalLength = totalLength
       ..isVerified = isVerified
+      ..employeeId = employeeIds
       ..clientId = clientIds;
     var box = Boxes.getTransactions();
     box.add(callData);
@@ -198,19 +192,24 @@ print('nothing');
     }
   }
 
-  void showConnectivitySnackBar(ConnectivityResult result) {
-    setState(() {
-      hasInternet = result != ConnectivityResult.none;
-      final message = hasInternet
-          ? 'You have again ${result.toString()}'
-          : 'You have no internet';
-      final color = hasInternet ? Colors.green : Colors.red;
+  void showConnectivitySnackBar(ConnectivityResult result) async {
+    List<LocalStorageCalls> fetchedDBList = [];
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    bool dBHasData = preferences.getBool('IsDataStoredInDB') ?? false;
 
-      if (hasInternet) {
-      } else {
-        print('nothing to do with list');
-      }
-    });
+    hasInternet = result != ConnectivityResult.none;
+    final message = hasInternet
+        ? 'You have again ${result.toString()}'
+        : 'You have no internet';
+
+    if (hasInternet && dBHasData) {
+      fetchedDBList = await getCallsFromDB();
+      sendDataToServer(fetchedDBList);
+      var box = Boxes.getTransactions();
+      box.clear();
+    } else {
+      print('no data in db');
+    }
   }
 
   void permission() async {
@@ -225,52 +224,59 @@ print('nothing');
     print('stop');
   }
 
-  void dataSendingBlock(){
-
-
-    if(hasInternet){
-
-
-
-
-    }
-  }
-
-
   void setStream() {
     PhoneState.phoneStateStream.listen((event) {
       setState(() {
-
         if (event != null) {
           status = event;
           if (status == PhoneStateStatus.CALL_STARTED) {
-            //call started
-            startingTime=DateTime.now();
             print('=================>call started');
-          } else if (status == PhoneStateStatus.CALL_ENDED){
+          } else if (status == PhoneStateStatus.CALL_ENDED) {
             getCallLogs();
 
             showDialog(
+              barrierColor: Colors.grey[100],
               barrierDismissible: false,
-
               context: context,
-              builder: (ctx) =>
-                  
-                  AlertDialog(
-                title: Text("Alert!"),
-                content: Text("You have raised a Alert Dialog Box"),
-                actions: <Widget>[
-                  FlatButton(
-                    onPressed: () async{
-Navigator.of(context).pop();
-},
-                    child: Text("Ok"),
-                  ),
-                ],
-              ),
+              builder: (ctx) {
+                Timer(const Duration(seconds: 4), () {
+                  Navigator.of(context).pop();
+                });
+                return AlertDialog(
+                  elevation: 100,
+                  shape: const RoundedRectangleBorder(
+                      side: BorderSide.none,
+                      borderRadius: BorderRadius.all(Radius.circular(15.0))),
+                  title: Center(
+                      child: Image.asset("assets/taskImg.png",
+                          width: 80, height: 90)),
+                  content: Container(
+                      height: 80,
+                      width: 80,
+                      child: Center(
+                          child: Column(
+                        children: [
+                          const Text(
+                            "Uploading Your Call",
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueAccent),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                              height: 40,
+                              width: 40,
+                              child: const CircularProgressIndicator(
+                                color: Colors.blueAccent,
+                                backgroundColor: Colors.deepPurpleAccent,
+                              )),
+                        ],
+                      ))),
+                );
+              },
             );
             print('===============>CALL_ENDED');
-
 
             // endingTime=DateTime.now();
             // if (hasInternet) {
@@ -278,18 +284,15 @@ Navigator.of(context).pop();
             //
             //   sendLocaleDataToServer(_lst);
 
-
-          //   }
-          // else {
-          //     // addCallDataToDB(callData);
-          //
-          //   }
-          } else if(status == PhoneStateStatus.NOTHING) {
+            //   }
+            // else {
+            // addCallDataToDB(callData);
+            //
+            //   }
+          } else if (status == PhoneStateStatus.NOTHING) {
             print('=========>nothing');
-          }
-          else{
+          } else {
             print('=========>coming');
-
           }
         }
       });
@@ -297,17 +300,13 @@ Navigator.of(context).pop();
   }
 
   void searchLead(String query) {
-    // setState(() {
-    //   searchleadList=leadList;
-    // });
-
-    final suggestion = searchleadList.where((lead) {
+    final suggestion = searchLeadList.where((lead) {
       final leadtile = lead.name.toLowerCase();
       final input = searchController.text.toLowerCase();
       return leadtile.contains(input);
     }).toList();
     setState(() {
-      searchleadList = suggestion;
+      searchLeadList = suggestion;
     });
   }
 
@@ -320,34 +319,23 @@ Navigator.of(context).pop();
 
   @override
   void initState() {
-
     getCallLogs();
     subscription =
         Connectivity().onConnectivityChanged.listen(showConnectivitySnackBar);
-    loading = false;
-    searchleadList = leadList;
-
-    super.initState();
-
-    // getLeads().then((value) => {
-    //   setState(() {
-    //     searchleadList=leadList;
-    //     loading=false;
-    //     print(searchleadList.length);
-    //   })
-    // });
-
-    //if (Platform.isIOS)
     setStream();
     permission();
+    getLeads().then((value) => {loading = false});
+
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: Colors.blueAccent,
       child: SafeArea(
         child: Scaffold(
+          resizeToAvoidBottomInset: false,
           body: Container(
             height: MediaQuery.of(context).size.height,
             width: MediaQuery.of(context).size.width,
@@ -359,30 +347,43 @@ Navigator.of(context).pop();
                   flex: 2,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20.0, vertical: 20),
+                        horizontal: 20.0, vertical: 15),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            CircleAvatar(
+                            const CircleAvatar(
                               radius: 39,
-
-                              //    backgroundImage: AssetImage(('assets/images/images.png')),
+                              backgroundImage: NetworkImage(
+                                  ('https://www.w3schools.com/howto/img_avatar.png')),
                             ),
                             InkWell(
                                 onTap: () async {
                                   getCallLogs();
-
                                 },
                                 child: Column(
                                   children: [
-                                    Text(x.toString()),
-                                    Icon(
-                                      Icons.power_settings_new,
-                                      size: 30,
-                                      color: Colors.amber,
+                                    Container(
+                                      height: 35,
+                                      width: 35,
+                                      decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.grey!,
+                                              offset: const Offset(0.0, 0.0),
+                                              blurRadius: 9.0,
+                                              spreadRadius: 4.0,
+                                            ),
+                                          ],
+                                          shape: BoxShape.circle),
+                                      child: const Icon(
+                                        Icons.power_settings_new,
+                                        size: 30,
+                                        color: Colors.red,
+                                      ),
                                     ),
                                   ],
                                 ))
@@ -391,11 +392,13 @@ Navigator.of(context).pop();
                         const Text(
                           'sssssss',
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 24),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              color: Colors.white),
                         ),
                         const Spacer(),
-                        const Text(
-                          'Assigned Leads',
+                        Text(
+                          tabIndicator,
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 24,
@@ -406,99 +409,155 @@ Navigator.of(context).pop();
                   ),
                 ),
                 Expanded(
-                  flex: 4,
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.30,
-                    width: MediaQuery.of(context).size.width,
-                    decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(30),
-                            topRight: Radius.circular(30))),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          Container(
-                              width: MediaQuery.of(context).size.width * 0.70,
-                              decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(30)),
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 18.0),
-                                child: TextField(
-                                  controller: searchController,
-                                  decoration: InputDecoration(
-                                    prefixIcon: Icon(Icons.search),
-                                    suffixIcon: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            searchleadList = leadList;
-                                            searchController.clear();
-                                          });
-                                        },
-                                        child: Icon(Icons.close)),
-                                    border: InputBorder.none,
+                    flex: 5,
+                    child: Container(
+                      width: MediaQuery.of(context).size.width,
+                      decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(30),
+                              topRight: Radius.circular(30))),
+                      child: DefaultTabController(
+                          length: 2,
+                          animationDuration: Duration(seconds: 1),
+                          initialIndex: currentIndex,
+                          child: Column(
+                            children: [
+                              TabBar(
+                                 indicatorPadding: EdgeInsets.only(top: 10),
+                                onTap: (index){
+                                  setState(() {
+                                    currentIndex=index;
+                                    tabIndicator=currentIndex==0?'Assigned Leads':'EditProfile';
+                                  });
+                                },
+                                labelPadding: EdgeInsets.only(top: 10),
+                                unselectedLabelColor: Colors.grey,
+                                labelColor: Colors.blueAccent,
+                                labelStyle: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blueAccent,
+                                    fontSize: 17),
+                                indicatorSize: TabBarIndicatorSize.tab,
+                                tabs: [
+                                  Tab(
+                                    text: 'Assigned Leads',
                                   ),
-                                  onChanged: searchLead,
-                                ),
-                              )),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Text('Pull Down To Refresh'),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          Container(
-                              height: MediaQuery.of(context).size.height * 0.47,
-                              child: ListView.builder(
-                                  itemCount: searchleadList.length,
-                                  itemBuilder:
-                                      (BuildContext context, int index) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 23.0, vertical: 10),
-                                      child: LeadTile(
-                                        name: leadList[index].name,
-                                        number: leadList[index].number,
-                                      ),
-                                    );
-                                  })
-                              // FutureBuilder<ClientModel>(
-                              //   future: getLeads(),
-                              //   builder: (context, snapshot) {
-                              //     if(snapshot.hasData){
-                              //       return ListView.builder(
-                              //           itemCount: snapshot.data!.data!.length,
-                              //           itemBuilder: (BuildContext context,int index){
-                              //
-                              //             for (var element in snapshot.data!.data!) {
-                              //               var lead=LeadModel(number: element.client!.phone!.toString(), name: element.client!.name!);
-                              //               leadList.add(lead);
-                              //               print('======${leadList.length}');
-                              //             }
-                              //             return Padding(
-                              //               padding: const EdgeInsets.symmetric(horizontal: 23.0,vertical: 10),
-                              //               child:  LeadTile(name:leadList[index].name,number: leadList[index].number,),
-                              //             );
-                              //           }
-                              //       );
-                              //     }
-                              //     else{
-                              //       return Center(child: CircularProgressIndicator());
-                              //     }
-                              //
-                              //   }
-                              // ),
+                                  Tab(
+                                    text: 'Edit Profile',
+                                  ),
+                                ],
                               ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
+                              Container(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.61,
+                                width: double.infinity,
+                                child: TabBarView(
+                                  children: [
+                                    SingleChildScrollView(
+                                      child: Column(
+                                        children: [
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Container(
+                                            height: 40,
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.70,
+                                              decoration: BoxDecoration(
+                                                  color: Colors.grey[300],
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          30)),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 18.0),
+                                                child: TextField(
+                                                  controller: searchController,
+                                                  decoration: InputDecoration(
+                                                    prefixIcon: const Icon(
+                                                        Icons.search),
+                                                    suffixIcon: GestureDetector(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            searchLeadList =
+                                                                leadList;
+                                                            searchController
+                                                                .clear();
+                                                          });
+                                                        },
+                                                        child: const Icon(
+                                                            Icons.close)),
+                                                    border: InputBorder.none,
+                                                  ),
+                                                  onChanged: searchLead,
+                                                ),
+                                              )),
+                                          const SizedBox(
+                                            height: 20,
+                                          ),
+                                          Container(
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  0.61,
+                                              child: RefreshIndicator(
+                                                key: _refreshIndicatorKey,
+                                                onRefresh: () async {
+                                                  getLeads();
+                                                },
+                                                child: loading
+                                                    ? Center(
+                                                        child: Container(
+                                                            height: 30,
+                                                            width: 30,
+                                                            child:
+                                                                const CircularProgressIndicator()))
+                                                    : ListView.builder(
+                                                        itemCount:
+                                                            searchLeadList
+                                                                .length,
+                                                        itemBuilder:
+                                                            (BuildContext
+                                                                    context,
+                                                                int index) {
+                                                          return Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                        .symmetric(
+                                                                    horizontal:
+                                                                        23.0,
+                                                                    vertical:
+                                                                        10),
+                                                            child: LeadTile(
+                                                              name: leadList[
+                                                                      index]
+                                                                  .name,
+                                                              number: leadList[
+                                                                      index]
+                                                                  .number,
+                                                              intrestedIn:
+                                                                  leadList[
+                                                                          index]
+                                                                      .projectName,
+                                                            ),
+                                                          );
+                                                        }),
+                                              )
+
+                                              ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.directions_transit),
+                                  ],
+                                ),
+                              )
+                            ],
+                          )),
+                    )),
               ],
             ),
           ),
@@ -509,8 +568,9 @@ Navigator.of(context).pop();
 }
 
 class LeadTile extends StatefulWidget {
-  String name, number;
-  LeadTile({required this.name, required this.number});
+  String name, number, intrestedIn;
+  LeadTile(
+      {required this.name, required this.number, required this.intrestedIn});
 
   @override
   State<LeadTile> createState() => _LeadTileState();
@@ -524,13 +584,17 @@ class _LeadTileState extends State<LeadTile> {
     super.initState();
   }
 
-  Future<void> LaunchCall(String num) async {
-    AndroidIntent intent = AndroidIntent(
-      action: 'android.intent.action.CALL',
-      data: 'tel:$num',
-    );
-    await intent.launch();
-  }
+  // Future<void> LaunchCall(String num) async {
+  //   var completeNum='0$num';
+  //   print('================');
+  //
+  //   print(completeNum);
+  //   AndroidIntent intent = AndroidIntent(
+  //     action: 'android.intent.action.CALL',
+  //     data: 'tel:$completeNum',
+  //   );
+  //   await intent.launch();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -542,7 +606,8 @@ class _LeadTileState extends State<LeadTile> {
             children: [
               const CircleAvatar(
                 radius: 30,
-                // backgroundImage: AssetImage('assets/images/images.png'),
+                backgroundImage: NetworkImage(
+                    'https://cutewallpaper.org/24/avatar-icon-png/1240-x-1240-0-avatar-profile-icon-png-transparent-png-transparent-png-image-pngitem.png'),
               ),
               const SizedBox(
                 width: 20,
@@ -552,27 +617,35 @@ class _LeadTileState extends State<LeadTile> {
                 children: [
                   Text(
                     widget.name,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  Text(widget.number, style: TextStyle(color: Colors.green)),
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  Text(widget.number,
+                      style: const TextStyle(color: Colors.green)),
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  Text(widget.intrestedIn,
+                      style: const TextStyle(color: Colors.red))
                 ],
               ),
               const Spacer(),
               CircleAvatar(
                 child: InkWell(
-                    onTap: () async  {
-                      SharedPreferences pref = await SharedPreferences.getInstance();
-                      pref.setString('ClientPhoneNo', widget.number);
-                          // launch('tel://03131533387'),
-                          await Permission.phone.request();
-                          await FlutterPhoneDirectCaller.callNumber(
-                              widget.number);
+                    onTap: () async {
+                      // launch('tel://03131533387'),
+                      await Permission.phone.request();
+                      var completeNum = '0${widget.number}';
+                      await FlutterPhoneDirectCaller.callNumber(completeNum);
 
-                          // LaunchCall(widget.number),
-                        },
+                      // LaunchCall(widget.number),
+                    },
                     child: const Icon(
                       Icons.call,
-                      color: Colors.green,
+                      color: Colors.yellowAccent,
                       size: 30,
                     )),
               )
@@ -585,9 +658,13 @@ class _LeadTileState extends State<LeadTile> {
 }
 
 class LeadModel {
-  String name, number;
+  String name, number, id, projectName;
 
-  LeadModel({required this.number, required this.name});
+  LeadModel(
+      {required this.number,
+      required this.name,
+      required this.id,
+      required this.projectName});
 }
 
 class Boxes {

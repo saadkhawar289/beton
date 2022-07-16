@@ -8,13 +8,30 @@ part 'LoacleCallModel.g.dart';
 @HiveType(typeId: 0)
 class LocalStorageCalls extends HiveObject{
 @HiveField(0)
-  late int totalLength;
+  late String totalLength;
 @HiveField(1)
   late bool isVerified;
 @HiveField(2)
-  late String clientId;
-
-
-
-
+  late String employeeId;
+@HiveField(3)
+late String clientId;
+// @HiveField(4)
+// LocalStorageCalls.fromJson(Map<String, dynamic> json) {
+//   totalLength = json['totalLength'];
+//   isVerified = json['isVerified'];
+//   employeeId = json['employeeId'];
+//   clientId = json['clientId'];
+//
+// }
+// @HiveField(5)
+// Map<String, dynamic> toJson() {
+//   final data = <String, dynamic>{};
+//   data['totalLength'] = totalLength;
+//   data['isVerified'] = isVerified;
+//   data['employeeId'] = employeeId;
+//   data['clientId'] = clientId;
+//
+//   return data;
+// }
 }
+
