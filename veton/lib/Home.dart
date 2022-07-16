@@ -1,83 +1,135 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:android_intent_plus/android_intent.dart';
+import 'package:hive/hive.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:veton/CallData.dart';
+import 'package:veton/ClientModel.dart';
+import 'package:veton/Model/LoacleCallModel.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
-
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-void loadData()async{
-  final prefs = await SharedPreferences.getInstance();
-}
+  DateTime? startingTime;
+  DateTime? endingTime;
+
+  int x = 0;
+  bool hasInternet = false;
+  late StreamSubscription subscription;
+  TextEditingController searchController = TextEditingController();
+  String query = '';
+  List<LeadModel> leadList = <LeadModel>[
+    LeadModel(number: '03335684680', name: 'saad'),
+    LeadModel(number: '3322', name: 'zain'),
+    LeadModel(number: '00000', name: 'waleed'),
+    LeadModel(number: '2233', name: 'haroon'),
+    LeadModel(number: '3322', name: 'ayesha'),
+    LeadModel(number: '00000', name: 'maaz'),
+    LeadModel(number: '3322', name: 'rizwana'),
+    LeadModel(number: '3322', name: 'khawar'),
+    LeadModel(number: '3322', name: 'ttt'),
+  ];
+  List<LeadModel> searchleadList = <LeadModel>[];
+  bool listChoice = false;
+  bool loading = true;
+
 
   PhoneStateStatus status = PhoneStateStatus.NOTHING;
   bool granted = false;
 
-
-  Future<void> getLeads()async{
+  ///......server functions to fetch and send
+  Future<ClientModel> getLeads() async {
     print('in');
     var baseUrl = 'http://44.203.240.206:5000/lead/mobile?assignedto=';
     var url = Uri.parse('$baseUrl+6289ec2a894e709193eb14e9');
-    var response = await http.get(url,
+    var response =
+        await http.get(url, headers: {"content-type": "application/json"});
 
-        headers: {"content-type": "application/json"});
-
-    final Map<String, dynamic> productData = jsonDecode(response.body);
-    print(productData);
+    var productData = jsonDecode(response.body);
     if (response.statusCode != 200) {
       print('error code ye h===== ${response.statusCode}');
-    //   message = productData['data'];
-    //   Fluttertoast.showToast(
-    //       msg: message,
-    //       toastLength: Toast.LENGTH_SHORT,
-    //       gravity: ToastGravity.BOTTOM,
-    //       backgroundColor: Colors.grey,
-    //       textColor: Colors.white,
-    //       fontSize: 16.0);
-    // } else {
-Map<String,dynamic> myData=json.decode(response.body);
-// myData.forEach((key, value) {
-//   print(value['data']['client']['id']);
-// });
-    var x=  myData.forEach((String a,dynamic b) {
-      print('444');
-      print(a[0]);
-      print(b);
-
-    });
-
+      return ClientModel.fromJson(productData);
 
 // print(myData[""]);
+    } else {
+      for (var value in ClientModel.fromJson(productData).data!) {
+        //var client=LeadModel(number: value.client!.phone.toString(), name: value.client!.name.toString());
+        // print(value.client!.phone);
+        // // leadList.add(client);
+        // // searchleadList.add(client);
+      }
+      print('{leadList lenght=================}${leadList.length}');
+      print('{leadList lenght=================}${searchleadList.length}');
+
+      return ClientModel.fromJson(productData);
     }
   }
-  void practice(){
-String myName='3131533387';
-int phone=22222;
-double decimal=2.2;
-bool myChoice=false;
-double a=20.2;
-int b=20;
-double result=0;
-result=a+b;
-print(result);
 
+  Future<bool> sendLocaleDataToServer(List<LocalStorageCalls> callsData) async {
+    var baseUrl = 'http://44.203.240.206:5000/user/signin';
+    var url = Uri.parse(baseUrl);
+
+    var response = await http.post(url,
+        body: json.encode(
+          {
+            "callRecord": callsData,
+          },
+        ),
+        headers: {"content-type": "application/json"});
+
+    if (response.statusCode != 200) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  Future<bool> sendDataToServer(List<LocalStorageCalls> callsData) async {
+    var baseUrl = 'http://44.203.240.206:5000/user/signin';
+    var url = Uri.parse(baseUrl);
+
+    var response = await http.post(url,
+        body: json.encode(
+          {
+            "callRecord": callsData,
+          },
+        ),
+        headers: {"content-type": "application/json"});
+
+    if (response.statusCode != 200) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
+  ///.... save calls data to locale DB and get data from locale DB
+  Future addCallDataToDB(
+      int totalLength, bool isVerified, String clientIds) async {
+    var callData = LocalStorageCalls()
+      ..totalLength = totalLength
+      ..isVerified = isVerified
+      ..clientId = clientIds;
+    var box = Boxes.getTransactions();
+    box.add(callData);
+    print('done');
+  }
 
-  Future<bool>  requestPermission() async {
+  Future<List<LocalStorageCalls>> getCallsFromDB() async {
+    List<LocalStorageCalls> callsData = [];
+    var box = Boxes.getTransactions();
+    callsData = box.values.toList();
+    return callsData.toList();
+  }
+
+  Future<bool> requestPermission() async {
     print('inpermission');
     var status = await Permission.phone.request();
 
@@ -94,16 +146,22 @@ print(result);
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    searchleadList=leadList;
+  void showConnectivitySnackBar(ConnectivityResult result) {
+    setState(() {
+      hasInternet = result != ConnectivityResult.none;
+      final message = hasInternet
+          ? 'You have again ${result.toString()}'
+          : 'You have no internet';
+      final color = hasInternet ? Colors.green : Colors.red;
 
-    //if (Platform.isIOS)
-      setStream();
-    permission();
+      if (hasInternet) {
+      } else {
+        print('nothing to do with list');
+      }
+    });
   }
-  void permission()async{
+
+  void permission() async {
     print('start');
     bool temp = await requestPermission();
     setState(() {
@@ -111,59 +169,87 @@ print(result);
       if (granted) {
         setStream();
       }
-
     });
     print('stop');
-
   }
 
   void setStream() {
     PhoneState.phoneStateStream.listen((event) {
       setState(() {
+
         if (event != null) {
           status = event;
-          if(status== PhoneStateStatus.CALL_STARTED){
+          if (status == PhoneStateStatus.CALL_STARTED) {
             //call started
-            print('call comming');
+            startingTime=DateTime.now();
+            print('=================>call started');
+          } else if (status == PhoneStateStatus.CALL_ENDED) {
+            print('===============>CALL_ENDED');
+            // endingTime=DateTime.now();
+            // if (hasInternet) {
+            //   List<LocalStorageCalls> _lst=[];
+            //
+            //   sendLocaleDataToServer(_lst);
 
-          }
-          else if(status== PhoneStateStatus.CALL_ENDED){
-            print('CALL_ENDED');
 
+          //   }
+          // else {
+          //     // addCallDataToDB(callData);
+          //
+          //   }
+          } else if(status == PhoneStateStatus.NOTHING) {
+            print('=========>nothing');
           }
           else{
-            print('comming');
+            print('=========>coming');
+
           }
         }
       });
     });
   }
 
-int x=0;
-  TextEditingController searchController = TextEditingController();
-  List<LeadModel> leadList=[
-    LeadModel(number: '03131533387', name: 'Saad'),
-    LeadModel(number: '03325536500', name: 'Shaiz'),
-    LeadModel(number: '03365569733', name: 'Haroon'),
-    LeadModel(number: '03320558995', name: 'Zain'),
-    LeadModel(number: '03472792742', name: 'Hassan'),
+  void searchLead(String query) {
+    // setState(() {
+    //   searchleadList=leadList;
+    // });
 
-  ];
-  List<LeadModel> searchleadList=[];
-  bool listChoice =false;
-
-
-  void searchLead(String query){
-    searchleadList=leadList;
-
-    final suggestion=searchleadList.where((lead)  {
-final leadtile=lead.name.toLowerCase();
-final input=query.toLowerCase();
-return leadtile.contains(input);
+    final suggestion = searchleadList.where((lead) {
+      final leadtile = lead.name.toLowerCase();
+      final input = searchController.text.toLowerCase();
+      return leadtile.contains(input);
     }).toList();
     setState(() {
-      searchleadList=suggestion;
+      searchleadList = suggestion;
     });
+  }
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    Hive.close();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    subscription =
+        Connectivity().onConnectivityChanged.listen(showConnectivitySnackBar);
+    loading = false;
+    searchleadList = leadList;
+
+    super.initState();
+    // getLeads().then((value) => {
+    //   setState(() {
+    //     searchleadList=leadList;
+    //     loading=false;
+    //     print(searchleadList.length);
+    //   })
+    // });
+
+    //if (Platform.isIOS)
+    setStream();
+    permission();
   }
 
   @override
@@ -181,30 +267,30 @@ return leadtile.contains(input);
               children: [
                 Expanded(
                   flex: 2,
-
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0, vertical: 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children:  [
+                      children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             CircleAvatar(
                               radius: 39,
+
                               //    backgroundImage: AssetImage(('assets/images/images.png')),
                             ),
                             InkWell(
-                                onTap: ()async{
-                               await   getLeads();
-                                  setState(() {
-                                    practice();
-                                  });
-                                },
+                                onTap: () async {},
                                 child: Column(
                                   children: [
                                     Text(x.toString()),
-                                    Icon(Icons.power_settings_new,size: 30,color: Colors.amber,),
+                                    Icon(
+                                      Icons.power_settings_new,
+                                      size: 30,
+                                      color: Colors.amber,
+                                    ),
                                   ],
                                 ))
                           ],
@@ -218,7 +304,9 @@ return leadtile.contains(input);
                         const Text(
                           'Assigned Leads',
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 24,color: Colors.white),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              color: Colors.white),
                         ),
                       ],
                     ),
@@ -229,7 +317,6 @@ return leadtile.contains(input);
                   child: Container(
                     height: MediaQuery.of(context).size.height * 0.30,
                     width: MediaQuery.of(context).size.width,
-
                     decoration: const BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.only(
@@ -237,57 +324,83 @@ return leadtile.contains(input);
                             topRight: Radius.circular(30))),
                     child: SingleChildScrollView(
                       child: Column(
-                        children:  [
-                          const SizedBox(height: 20,),
+                        children: [
+                          const SizedBox(
+                            height: 20,
+                          ),
                           Container(
-                              width:MediaQuery.of(context).size.width*0.70 ,
+                              width: MediaQuery.of(context).size.width * 0.70,
                               decoration: BoxDecoration(
                                   color: Colors.grey[300],
-
-                                  borderRadius: BorderRadius.circular(30)
-                              ),
+                                  borderRadius: BorderRadius.circular(30)),
                               child: Padding(
-                                padding: const EdgeInsets.only(left:18.0),
+                                padding: const EdgeInsets.only(left: 18.0),
                                 child: TextField(
-                                  controller:searchController ,
-                                  decoration:  InputDecoration(
-                                    prefixIcon:Icon(Icons.search) ,
-                                      suffixIcon: GestureDetector(
-                                          onTap: (){
-                                            setState(() {
-                                              searchleadList=leadList;
-                                              searchController.clear();
-                                            });
-                                          },
-                                          child: Icon(Icons.close)),
-                                      border: InputBorder.none,
-
-
+                                  controller: searchController,
+                                  decoration: InputDecoration(
+                                    prefixIcon: Icon(Icons.search),
+                                    suffixIcon: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            searchleadList = leadList;
+                                            searchController.clear();
+                                          });
+                                        },
+                                        child: Icon(Icons.close)),
+                                    border: InputBorder.none,
                                   ),
                                   onChanged: searchLead,
                                 ),
                               )),
-                          const  SizedBox(height: 40,),
-
                           SizedBox(
-                            height: MediaQuery.of(context).size.height ,
-                            child: ListView.builder(
-                                itemCount: searchleadList.length,
-                                itemBuilder: (BuildContext context,int index){
-                                  var lead=searchleadList[index];
-
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 23.0,vertical: 10),
-                                    child:  LeadTile(name:lead.name ,number: lead.number,),
-                                  );
-                                }
-                            ),
+                            height: 20,
                           ),
-
-
-
-
-
+                          Text('Pull Down To Refresh'),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          Container(
+                              height: MediaQuery.of(context).size.height * 0.47,
+                              child: ListView.builder(
+                                  itemCount: searchleadList.length,
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 23.0, vertical: 10),
+                                      child: LeadTile(
+                                        name: leadList[index].name,
+                                        number: leadList[index].number,
+                                      ),
+                                    );
+                                  })
+                              // FutureBuilder<ClientModel>(
+                              //   future: getLeads(),
+                              //   builder: (context, snapshot) {
+                              //     if(snapshot.hasData){
+                              //       return ListView.builder(
+                              //           itemCount: snapshot.data!.data!.length,
+                              //           itemBuilder: (BuildContext context,int index){
+                              //
+                              //             for (var element in snapshot.data!.data!) {
+                              //               var lead=LeadModel(number: element.client!.phone!.toString(), name: element.client!.name!);
+                              //               leadList.add(lead);
+                              //               print('======${leadList.length}');
+                              //             }
+                              //             return Padding(
+                              //               padding: const EdgeInsets.symmetric(horizontal: 23.0,vertical: 10),
+                              //               child:  LeadTile(name:leadList[index].name,number: leadList[index].number,),
+                              //             );
+                              //           }
+                              //       );
+                              //     }
+                              //     else{
+                              //       return Center(child: CircularProgressIndicator());
+                              //     }
+                              //
+                              //   }
+                              // ),
+                              ),
                         ],
                       ),
                     ),
@@ -302,13 +415,9 @@ return leadtile.contains(input);
   }
 }
 
-
-
-
-
 class LeadTile extends StatefulWidget {
-  String name,number;
-  LeadTile({required this.name,required this.number}) ;
+  String name, number;
+  LeadTile({required this.name, required this.number});
 
   @override
   State<LeadTile> createState() => _LeadTileState();
@@ -320,17 +429,15 @@ class _LeadTileState extends State<LeadTile> {
   @override
   void initState() {
     super.initState();
-
-
   }
-  Future<void>LaunchCall(String num)async{
-    AndroidIntent intent =  AndroidIntent(
+
+  Future<void> LaunchCall(String num) async {
+    AndroidIntent intent = AndroidIntent(
       action: 'android.intent.action.CALL',
       data: 'tel:$num',
     );
     await intent.launch();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -339,56 +446,56 @@ class _LeadTileState extends State<LeadTile> {
       child: Column(
         children: [
           Row(
-            children:  [
-
+            children: [
               const CircleAvatar(
                 radius: 30,
                 // backgroundImage: AssetImage('assets/images/images.png'),
-              )
-              ,const SizedBox(width: 20,),
-
+              ),
+              const SizedBox(
+                width: 20,
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.name,style: TextStyle(fontWeight: FontWeight.bold),),
-                  Text(widget.number,style: TextStyle(color: Colors.green)),
-
+                  Text(
+                    widget.name,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(widget.number, style: TextStyle(color: Colors.green)),
                 ],
               ),
               const Spacer(),
               CircleAvatar(
                 child: InkWell(
+                    onTap: () async => {
+                          // launch('tel://03131533387'),
+                          await Permission.phone.request(),
+                          await FlutterPhoneDirectCaller.callNumber(
+                              widget.number)
 
-                    onTap: ()async=>{
-                      // launch('tel://03131533387'),
-                      await Permission.phone.request(),
-                     await FlutterPhoneDirectCaller.callNumber(widget.number)
-                      
-                      // LaunchCall(widget.number),
-                    },
-
-
-
-
-                    child: const Icon(Icons.call,color: Colors.green,size: 30,)),
+                          // LaunchCall(widget.number),
+                        },
+                    child: const Icon(
+                      Icons.call,
+                      color: Colors.green,
+                      size: 30,
+                    )),
               )
             ],
           ),
-
         ],
       ),
     );
   }
 }
 
-
 class LeadModel {
-  String name,number;
+  String name, number;
 
-  LeadModel({required this.number,required this.name});
+  LeadModel({required this.number, required this.name});
+}
 
-
-
-
-
+class Boxes {
+  static Box<LocalStorageCalls> getTransactions() =>
+      Hive.box<LocalStorageCalls>('CallsHistory');
 }

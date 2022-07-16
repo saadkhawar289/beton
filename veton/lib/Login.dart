@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_login/flutter_login.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'dart:io';
 
 import 'Home.dart';
@@ -12,6 +13,9 @@ import 'package:http/http.dart' as http;
 final users = {'ss@ss.com': '12345'};
 
 class LoginScreen extends StatelessWidget {
+  // final HydratedStorage storage;
+  // LoginScreen(this.storage);
+
   Duration get loginTime => Duration(milliseconds: 2250);
 
   Future<String> _authUser(LoginData data) async{
