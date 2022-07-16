@@ -9,8 +9,13 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:hive/hive.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:veton/ClientModel.dart';
 import 'package:veton/Model/LoacleCallModel.dart';
+import 'package:call_log/call_log.dart';
+import 'package:intl/intl.dart';
+
+
 
 class Home extends StatefulWidget {
   @override
@@ -44,6 +49,50 @@ class _HomeState extends State<Home> {
 
   PhoneStateStatus status = PhoneStateStatus.NOTHING;
   bool granted = false;
+  Iterable<CallLogEntry> lst=[];
+
+
+  void getCallLogs()async{
+
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    String clientNum = preferences.getString('ClientPhoneNo')??'0';
+    Iterable<CallLogEntry> entries = await CallLog.get();
+   var xx= entries.first;
+   if(xx.number.toString()==clientNum){
+     print('send this call');
+   }
+   else{
+print('nothing');
+   }
+   // print(xx.name);
+   //  print(xx.number);
+   //  print(getTime(xx.duration!));
+   //  print(formatDate( DateTime.fromMillisecondsSinceEpoch(xx.timestamp!)));
+
+
+  }
+
+  String formatDate(DateTime dt){
+
+    return DateFormat('d-MMM-y H:m:s').format(dt);
+  }
+
+  String getTime(int duration){
+    Duration d1 = Duration(seconds: duration);
+    String formatedDuration = "";
+    if(d1.inHours > 0){
+      formatedDuration += d1.inHours.toString() + "h ";
+    }
+    if(d1.inMinutes > 0){
+      formatedDuration += d1.inMinutes.toString() + "m ";
+    }
+    if(d1.inSeconds > 0){
+      formatedDuration += d1.inSeconds.toString() + "s";
+    }
+    if(formatedDuration.isEmpty)
+      return "0s";
+    return formatedDuration;
+  }
 
   ///......server functions to fetch and send
   Future<ClientModel> getLeads() async {
@@ -91,6 +140,7 @@ class _HomeState extends State<Home> {
       return true;
     }
   }
+
   Future<bool> sendDataToServer(List<LocalStorageCalls> callsData) async {
     var baseUrl = 'http://44.203.240.206:5000/user/signin';
     var url = Uri.parse(baseUrl);
@@ -109,6 +159,9 @@ class _HomeState extends State<Home> {
       return true;
     }
   }
+
+
+
 
   ///.... save calls data to locale DB and get data from locale DB
   Future addCallDataToDB(
@@ -130,7 +183,6 @@ class _HomeState extends State<Home> {
   }
 
   Future<bool> requestPermission() async {
-    print('inpermission');
     var status = await Permission.phone.request();
 
     switch (status) {
@@ -173,6 +225,18 @@ class _HomeState extends State<Home> {
     print('stop');
   }
 
+  void dataSendingBlock(){
+
+
+    if(hasInternet){
+
+
+
+
+    }
+  }
+
+
   void setStream() {
     PhoneState.phoneStateStream.listen((event) {
       setState(() {
@@ -183,8 +247,31 @@ class _HomeState extends State<Home> {
             //call started
             startingTime=DateTime.now();
             print('=================>call started');
-          } else if (status == PhoneStateStatus.CALL_ENDED) {
+          } else if (status == PhoneStateStatus.CALL_ENDED){
+            getCallLogs();
+
+            showDialog(
+              barrierDismissible: false,
+
+              context: context,
+              builder: (ctx) =>
+                  
+                  AlertDialog(
+                title: Text("Alert!"),
+                content: Text("You have raised a Alert Dialog Box"),
+                actions: <Widget>[
+                  FlatButton(
+                    onPressed: () async{
+Navigator.of(context).pop();
+},
+                    child: Text("Ok"),
+                  ),
+                ],
+              ),
+            );
             print('===============>CALL_ENDED');
+
+
             // endingTime=DateTime.now();
             // if (hasInternet) {
             //   List<LocalStorageCalls> _lst=[];
@@ -233,12 +320,15 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
+
+    getCallLogs();
     subscription =
         Connectivity().onConnectivityChanged.listen(showConnectivitySnackBar);
     loading = false;
     searchleadList = leadList;
 
     super.initState();
+
     // getLeads().then((value) => {
     //   setState(() {
     //     searchleadList=leadList;
@@ -282,7 +372,10 @@ class _HomeState extends State<Home> {
                               //    backgroundImage: AssetImage(('assets/images/images.png')),
                             ),
                             InkWell(
-                                onTap: () async {},
+                                onTap: () async {
+                                  getCallLogs();
+
+                                },
                                 child: Column(
                                   children: [
                                     Text(x.toString()),
@@ -467,11 +560,13 @@ class _LeadTileState extends State<LeadTile> {
               const Spacer(),
               CircleAvatar(
                 child: InkWell(
-                    onTap: () async => {
+                    onTap: () async  {
+                      SharedPreferences pref = await SharedPreferences.getInstance();
+                      pref.setString('ClientPhoneNo', widget.number);
                           // launch('tel://03131533387'),
-                          await Permission.phone.request(),
+                          await Permission.phone.request();
                           await FlutterPhoneDirectCaller.callNumber(
-                              widget.number)
+                              widget.number);
 
                           // LaunchCall(widget.number),
                         },
