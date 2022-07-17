@@ -46,7 +46,7 @@ class _HomeState extends State<Home> {
     List<LocalStorageCalls> sendingList = [];
     bool isVerified = false;
     String clientNum = preferences.getString('ClientPhoneNo') ?? '0';
-    String employeeID = preferences.getString('employeeID') ?? '0';
+    String employeeID = preferences.getString('employeeID') ?? 'saad1234DummyID';
     String duration = singleCallLog.duration.toString();
     String clientID = preferences.getString('clientID') ?? '0';
     String completeNum = '0$clientNum';
@@ -131,7 +131,9 @@ class _HomeState extends State<Home> {
   }
 
   Future<bool> sendDataToServer(List<LocalStorageCalls> callsData) async {
-    var baseUrl = 'http://44.203.240.206:5000/user/signin';
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    var to=pref.getString('to');
+    var baseUrl = 'http://44.203.240.206:5000/call';
     var url = Uri.parse(baseUrl);
     List<CallModel> list = [];
     var callData = callsData.first;
@@ -139,7 +141,12 @@ class _HomeState extends State<Home> {
         totalLength: callData.totalLength,
         employeeId: callData.employeeId,
         clientId: callData.clientId,
-        isVerified: callData.isVerified);
+        isVerified: callData.isVerified,
+        to:to!,
+        from: callData.employeeId
+    );
+    print(callRec.to);
+    print(callRec.from);
     list.add(callRec);
     var response = await http.post(url,
         body: json.encode(
@@ -150,8 +157,14 @@ class _HomeState extends State<Home> {
         headers: {"content-type": "application/json"});
 
     if (response.statusCode != 200) {
+      print('errpr ha');
+
+      print(response.body);
       return false;
     } else {
+      print('errpr nae');
+      print(response.body);
+
       return true;
     }
   }
@@ -203,9 +216,10 @@ class _HomeState extends State<Home> {
         : 'You have no internet';
 
     if (hasInternet && dBHasData) {
-      fetchedDBList = await getCallsFromDB();
-      sendDataToServer(fetchedDBList);
-      var box = Boxes.getTransactions();
+      print('data in db===========>$dBHasData');
+      // fetchedDBList = await getCallsFromDB();
+      // sendDataToServer(fetchedDBList);
+       var box = Boxes.getTransactions();
       box.clear();
     } else {
       print('no data in db');
@@ -465,40 +479,40 @@ isScrollable: false,
                                           const SizedBox(
                                             height: 15,
                                           ),
-                                          Container(
-
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.70,
-                                              decoration: BoxDecoration(
-                                                  color: Colors.grey[300],
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          30)),
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 18.0),
-                                                child: TextField(
-                                                  controller: searchController,
-                                                  decoration: InputDecoration(
-                                                    prefixIcon: const Icon(
-                                                        Icons.search),
-                                                    suffixIcon: GestureDetector(
-                                                        onTap: () {
-                                                          setState(() {
-                                                            searchLeadList = leadList;
-                                                            searchController
-                                                                .clear();
-                                                          });
-                                                        },
-                                                        child: const Icon(
-                                                            Icons.close)),
-                                                    border: InputBorder.none,
-                                                  ),
-                                                  onChanged: searchLead,
-                                                ),
-                                              )),
+                                          // Container(
+                                          //
+                                          //     width: MediaQuery.of(context)
+                                          //             .size
+                                          //             .width *
+                                          //         0.70,
+                                          //     decoration: BoxDecoration(
+                                          //         color: Colors.grey[300],
+                                          //         borderRadius:
+                                          //             BorderRadius.circular(
+                                          //                 30)),
+                                          //     child: Padding(
+                                          //       padding: const EdgeInsets.only(
+                                          //           left: 18.0),
+                                          //       child: TextField(
+                                          //         controller: searchController,
+                                          //         decoration: InputDecoration(
+                                          //           prefixIcon: const Icon(
+                                          //               Icons.search),
+                                          //           suffixIcon: GestureDetector(
+                                          //               onTap: () {
+                                          //                 setState(() {
+                                          //                   searchLeadList = leadList;
+                                          //                   searchController
+                                          //                       .clear();
+                                          //                 });
+                                          //               },
+                                          //               child: const Icon(
+                                          //                   Icons.close)),
+                                          //           border: InputBorder.none,
+                                          //         ),
+                                          //         onChanged: searchLead,
+                                          //       ),
+                                          //     )),
                                           const SizedBox(
                                             height: 20,
                                           ),
@@ -548,6 +562,7 @@ isScrollable: false,
                                                                   leadList[
                                                                           index]
                                                                       .projectName,
+                                                              id: leadList[index].id,
                                                             ),
                                                           );
                                                         }),
@@ -574,9 +589,9 @@ isScrollable: false,
 }
 
 class LeadTile extends StatefulWidget {
-  String name, number, intrestedIn;
+  String name, number, intrestedIn,id;
   LeadTile(
-      {required this.name, required this.number, required this.intrestedIn});
+      {required this.name, required this.number, required this.intrestedIn,required this.id});
 
   @override
   State<LeadTile> createState() => _LeadTileState();
@@ -644,6 +659,11 @@ class _LeadTileState extends State<LeadTile> {
                 CircleAvatar(
                   child: InkWell(
                       onTap: () async {
+                        SharedPreferences pref = await SharedPreferences.getInstance();
+                        pref.setString('ClientPhoneNo', widget.number);
+                        pref.setString('clientID', widget.id);
+                        pref.setString('to', widget.name);
+
                         // launch('tel://03131533387'),
                         await Permission.phone.request();
                         var completeNum = '0${widget.number}';

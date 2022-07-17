@@ -3,26 +3,32 @@ class CallModel {
   late bool isVerified;
   late String employeeId;
   late String clientId;
+  late String from;
+  late String to;
 
   CallModel(
       {required this.totalLength,
       required this.employeeId,
       required this.clientId,
-      required this.isVerified});
+      required this.isVerified,required this.from,required this.to});
 
   CallModel.fromJson(Map<String, dynamic> json) {
     totalLength = json['totalLength'];
-    isVerified = json['isVerified'];
+    isVerified = json['verified'];
     employeeId = json['employeeId'];
     clientId = json['clientId'];
+    to = json['to'];
+    from = json['from'];
+
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['totalLength'] = totalLength;
-    data['isVerified'] = isVerified;
+    data['verified'] = isVerified;
     data['employeeId'] = employeeId;
     data['clientId'] = clientId;
-
+    data['from']=from;
+    data['to']=to;
     return data;
   }
 }
