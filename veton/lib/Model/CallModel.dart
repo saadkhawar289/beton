@@ -15,7 +15,7 @@ class CallModel {
   CallModel.fromJson(Map<String, dynamic> json) {
     totalLength = json['totalLength'];
     isVerified = json['verified'];
-    employeeId = json['employeeId'];
+    employeeId = json['employeeIdsssssss'];
     clientId = json['clientId'];
     to = json['to'];
     from = json['from'];
@@ -23,7 +23,7 @@ class CallModel {
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
-    data['totalLength'] = totalLength;
+    data['duration'] = totalLength;
     data['verified'] = isVerified;
     data['employeeId'] = employeeId;
     data['clientId'] = clientId;

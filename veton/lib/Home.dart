@@ -70,6 +70,7 @@ class _HomeState extends State<Home> {
     if (hasInternet) {
       sendDataToServer(listOfCalls);
     } else {
+      print('========================================>>>>>>>>>>>>>Data localy saved interner nae ha');
       var singleCallData = listOfCalls.first;
       addCallDataToDB(singleCallData.totalLength, singleCallData.isVerified,
           singleCallData.clientId, singleCallData.employeeId);
@@ -140,20 +141,16 @@ class _HomeState extends State<Home> {
     var callRec = CallModel(
         totalLength: callData.totalLength,
         employeeId: callData.employeeId,
-        clientId: callData.clientId,
+        clientId:'62b7624c4a3be4c69a4529e6', //callData.clientId,
         isVerified: callData.isVerified,
-        to:to!,
-        from: callData.employeeId
+        to:'62b7624c4a3be4c69a4529e6',//to!,
+        from:'62c4439cdeb2478711019c90' //callData.employeeId
     );
     print(callRec.to);
     print(callRec.from);
     list.add(callRec);
     var response = await http.post(url,
-        body: json.encode(
-          {
-            "callRecord": list,
-          },
-        ),
+        body: json.encode(list),
         headers: {"content-type": "application/json"});
 
     if (response.statusCode != 200) {
@@ -208,7 +205,7 @@ class _HomeState extends State<Home> {
   void showConnectivitySnackBar(ConnectivityResult result) async {
     List<LocalStorageCalls> fetchedDBList = [];
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    bool dBHasData = preferences.getBool('IsDataStoredInDB') ?? false;
+    bool dBHasData = preferences.getBool('IsDataStoredInDB') ?? true;
 
     hasInternet = result != ConnectivityResult.none;
     final message = hasInternet
@@ -217,8 +214,8 @@ class _HomeState extends State<Home> {
 
     if (hasInternet && dBHasData) {
       print('data in db===========>$dBHasData');
-      // fetchedDBList = await getCallsFromDB();
-      // sendDataToServer(fetchedDBList);
+      fetchedDBList = await getCallsFromDB();
+      sendDataToServer(fetchedDBList);
        var box = Boxes.getTransactions();
       box.clear();
     } else {
@@ -661,8 +658,8 @@ class _LeadTileState extends State<LeadTile> {
                       onTap: () async {
                         SharedPreferences pref = await SharedPreferences.getInstance();
                         pref.setString('ClientPhoneNo', widget.number);
-                        pref.setString('clientID', widget.id);
-                        pref.setString('to', widget.name);
+                        pref.setString('clientID', "62b7624c4a3be4c69a4529e6");
+                        pref.setString('employee', '62c4439cdeb2478711019c90');
 
                         // launch('tel://03131533387'),
                         await Permission.phone.request();
