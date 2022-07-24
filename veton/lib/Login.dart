@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -13,57 +12,58 @@ import 'package:http/http.dart' as http;
 final users = {'ss@ss.com': '12345'};
 
 class LoginScreen extends StatelessWidget {
+  Duration get loginTime => Duration(milliseconds: 1050);
+  String? userID;
+  String? employeeName;
+  bool isLoginSuccess = false;
+  String loginMessage = '';
 
-
-  Duration get loginTime => Duration(milliseconds: 2250);
-
-  Future<String> _authUser(LoginData data) async{
+  Future<String> _authUser(LoginData data) async {
     var baseUrl = 'http://44.203.240.206:5000/user/signin';
     var url = Uri.parse(baseUrl);
-   print('in');
+
     var response = await http.post(url,
         body: json.encode(
           {
-            "email": 'rehankhalid@gmail.com',
-            "password": 'TeamLead123!',
+            "email": data.name,
+            "password": data.password,
           },
         ),
         headers: {"content-type": "application/json"});
-print('out');
+
     final Map<String, dynamic> productData = jsonDecode(response.body);
 
-print(productData);
-// if(productData['message']=='User Not Registered'){
-//   print('no loggin');
-//
-//   //no login
-// }
-// else if(productData['data']!= null){
-//   print('=============>>>>>>>>>${productData['data']}');
-// }
-// else{
-//   print(productData['data']['_id']) ;
-// }
+    print(productData);
+    if (productData['message'] == 'User Not Registered') {
+      loginMessage = productData['message'];
+    } else if (productData['data'] != null) {
+      var id='${productData['data']['_id']}';
+      var name= '${productData['data']['first_name']} ${productData['data']['last_name']}';
+      print('=============>>>>>>>>>$name');
+      print('=============>>>>>>>>>$id');
 
+      userID=id;
+      employeeName=name;
+      isLoginSuccess = true;
+    } else {
+      loginMessage = productData['message'];
 
+    }
     return Future.delayed(loginTime).then((_) {
-      if (!users.containsKey(data.name)) {
-        return 'User not exists';
-      }
-      if (users[data.name] != data.password) {
-        return 'Password does not match';
+      if (!isLoginSuccess) {
+        return loginMessage;
       }
       return '';
     });
   }
 
-  Future<String> _onSubmitUser(LoginData data) {
-    print('Name: ${data.name}, Password: ${data.password}');
-    return Future.delayed(loginTime).then((_) {
-      users[data.name] = data.password;
-      return '';
-    });
-  }
+  // Future<String> _onSubmitUser(LoginData data) {
+  //   print('Name: ${data.name}, Password: ${data.password}');
+  //   return Future.delayed(loginTime).then((_) {
+  //     users[data.name] = data.password;
+  //     return '';
+  //   });
+  // }
 
   Future<String> _recoverPassword(String name) {
     print('Name: $name');
@@ -78,13 +78,11 @@ print(productData);
   @override
   Widget build(BuildContext context) {
     return FlutterLogin(
-
-      logo: 'assets/logo.png',
+      logo: 'assets/betoonlogo.png',
       onLogin: _authUser,
-     // onSignup: _onSubmitUser,
       onSubmitAnimationCompleted: () {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (context) => Home(),
+          builder: (context) => Home(userID!,employeeName!),
         ));
       },
       onRecoverPassword: _recoverPassword,

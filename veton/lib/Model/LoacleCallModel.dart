@@ -1,6 +1,8 @@
 
 
 
+import 'dart:convert';
+
 import 'package:hive/hive.dart';
 
 part 'LoacleCallModel.g.dart';
@@ -15,14 +17,26 @@ class LocalStorageCalls extends HiveObject{
   late String employeeId;
 @HiveField(3)
 late String clientId;
-// @HiveField(4)
-// LocalStorageCalls.fromJson(Map<String, dynamic> json) {
-//   totalLength = json['totalLength'];
-//   isVerified = json['isVerified'];
-//   employeeId = json['employeeId'];
-//   clientId = json['clientId'];
-//
+LocalStorageCalls();
+
+// @override
+// String toString() {
+//   return jsonEncode({
+//     'duration': totalLength,
+//     'verified': isVerified,
+//     'from': employeeId,
+//     'to': clientId,
+//   });
 // }
+
+
+ LocalStorageCalls.fromJson(Map<String, dynamic> json) {
+  totalLength = json['totalLength'];
+  isVerified = json['isVerified'];
+  employeeId = json['from'];
+  clientId = json['to'];
+
+}
 // @HiveField(5)
 // Map<String, dynamic> toJson() {
 //   final data = <String, dynamic>{};
