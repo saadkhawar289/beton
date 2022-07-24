@@ -130,14 +130,14 @@ class Client {
   String? id;
   String? email;
   String? name;
-  int? phone;
+  String? phone;
   String? createdBy;
   String? clientId;
   int? v;
 Client copyWith({  String? id,
   String? email,
   String? name,
-  int? phone,
+  String? phone,
   String? createdBy,
   String? clientId,
   int? v,

@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
-import 'package:android_intent_plus/android_intent.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +12,6 @@ import 'package:veton/ClientModel.dart';
 import 'package:veton/Model/CallModel.dart';
 import 'package:veton/Model/LoacleCallModel.dart';
 import 'package:call_log/call_log.dart';
-import 'package:intl/intl.dart';
 
 class Home extends StatefulWidget {
   String userID,name;
@@ -86,9 +84,9 @@ class _HomeState extends State<Home> {
     }
   }
 
-  String formatDate(DateTime dt) {
-    return DateFormat('d-MMM-y H:m:s').format(dt);
-  }
+  // String formatDate(DateTime dt) {
+  //   return DateFormat('d-MMM-y H:m:s').format(dt);
+  // }
 
   String getTime(int duration) {
     Duration d1 = Duration(seconds: duration);
@@ -658,7 +656,6 @@ class LeadTile extends StatefulWidget {
 }
 
 class _LeadTileState extends State<LeadTile> {
-  late AndroidIntent intent;
 
   @override
   void initState() {
