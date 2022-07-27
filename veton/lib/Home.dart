@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -451,10 +452,15 @@ from: e.from
                                             ),
                                           ],
                                           shape: BoxShape.circle),
-                                      child: const Icon(
-                                        Icons.power_settings_new,
-                                        size: 30,
-                                        color: Colors.red,
+                                      child: InkWell(
+                                        onTap: (){
+                                          exit(0);
+                                        },
+                                        child: const Icon(
+                                          Icons.power_settings_new,
+                                          size: 30,
+                                          color: Colors.red,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -464,7 +470,7 @@ from: e.from
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0,top: 5),
                           child: Text(
-                            '#${widget.name}',textAlign: TextAlign.center,
+                            '${widget.name}',textAlign: TextAlign.center,
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
@@ -584,7 +590,7 @@ from: e.from
                                                 onRefresh: () async {
                                                   leadList.clear();
                                                   searchLeadList.clear();
-                                                  getLeads();
+                                                 hasInternet? getLeads():null;
                                                 },
                                                 child: loading
                                                     ? Center(
@@ -723,7 +729,7 @@ class _LeadTileState extends State<LeadTile> {
 
                         // launch('tel://03131533387'),
                         await Permission.phone.request();
-                        var completeNum = '0${widget.number}';
+                        var completeNum = widget.number;
                         await FlutterPhoneDirectCaller.callNumber(completeNum);
 
                         // LaunchCall(widget.number),

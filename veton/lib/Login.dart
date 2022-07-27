@@ -36,13 +36,13 @@ class LoginScreen extends StatelessWidget {
     if (productData['message'] == 'User Not Registered') {
       loginMessage = productData['message'];
     } else if (productData['data'] != null) {
-      var id='${productData['data']['_id']}';
-      var name= '${productData['data']['first_name']} ${productData['data']['last_name']}';
-      print('=============>>>>>>>>>$name');
-      print('=============>>>>>>>>>$id');
+       userID='${productData['data']['_id']}'.toString();
+       employeeName= '${productData['data']['first_name']} ${productData['data']['last_name']}'.toString();
+      print('=============>>>>>>>>>$userID');
+      print('=============>>>>>>>>>$employeeName');
 
-      userID=id;
-      employeeName=name;
+      userID.toString();
+      employeeName.toString();
       isLoginSuccess = true;
     } else {
       loginMessage = productData['message'];
@@ -80,9 +80,16 @@ class LoginScreen extends StatelessWidget {
       logo: 'assets/betoonlogo.png',
       onLogin: _authUser,
       onSubmitAnimationCompleted: () {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (context) => Home(userID!,employeeName!),
-        ));
+        print(userID);
+
+        print(employeeName);
+
+        Future.delayed(Duration(seconds: 0),(){
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => Home(userID!,employeeName!),
+          ));
+        });
+
       },
       onRecoverPassword: _recoverPassword,
       //     loginProviders: <LoginProvider>[
