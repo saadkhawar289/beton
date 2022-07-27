@@ -15,9 +15,9 @@ import 'package:veton/Model/LoacleCallModel.dart';
 import 'package:call_log/call_log.dart';
 
 class Home extends StatefulWidget {
-  String userID,name;
+  String userID,name,profilePicture;
 
-  Home(this.userID,this.name);
+  Home(this.userID,this.name,this.profilePicture);
 
   @override
   State<Home> createState() => _HomeState();
@@ -51,7 +51,7 @@ class _HomeState extends State<Home> {
     String employeeID = widget.userID;
     String duration = singleCallLog.duration.toString();
     String clientID = preferences.getString('clientID') ?? '0';
-    String completeNum = '0$clientNum';
+    String completeNum = '$clientNum';
     print('================0000000??????${employeeID}');
     print('================0000000??????${clientID}');
 
@@ -112,8 +112,8 @@ class _HomeState extends State<Home> {
       leadList.clear();
       searchLeadList.clear();
     });
-    var baseUrl = 'http://44.203.240.206:5000/lead/mobile?assignedto=';
-    var url = Uri.parse('$baseUrl+6289ec2a894e709193eb14e9');
+    var baseUrl = 'http://44.203.240.206:5000/lead/mobile?assignedTo=';
+    var url = Uri.parse('$baseUrl${widget.userID}');
     var response =
     await http.get(url, headers: {"content-type": "application/json"});
 
@@ -426,10 +426,11 @@ from: e.from
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const CircleAvatar(
+                             CircleAvatar(
+
                               radius: 39,
-                              backgroundImage: NetworkImage(
-                                  ('https://www.w3schools.com/howto/img_avatar.png')),
+                              backgroundImage:widget.profilePicture.isEmpty? NetworkImage(
+                                  'https://www.w3schools.com/howto/img_avatar.png'):NetworkImage(widget.profilePicture.toString()),
                             ),
                             InkWell(
                                 onTap: () async {
@@ -588,9 +589,18 @@ from: e.from
                                               child: RefreshIndicator(
                                                 key: _refreshIndicatorKey,
                                                 onRefresh: () async {
+                                                  const snackBar = SnackBar(
+                                                    content: Text('No Internet'),
+                                                  );
                                                   leadList.clear();
                                                   searchLeadList.clear();
-                                                 hasInternet? getLeads():null;
+                                                 hasInternet? getLeads():
+
+
+// Find the ScaffoldMessenger in the widget tree
+// and use it to show a SnackBar.
+                                                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                                  ;
                                                 },
                                                 child: loading
                                                     ? Center(
@@ -714,7 +724,7 @@ class _LeadTileState extends State<LeadTile> {
                     const SizedBox(
                       height: 5,
                     ),
-                    Text(widget.id,
+                    Text(widget.intrestedIn,
                         style: const TextStyle(color: Colors.red))
                   ],
                 ),

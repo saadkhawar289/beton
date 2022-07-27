@@ -13,7 +13,7 @@ final users = {'ss@ss.com': '12345'};
 class LoginScreen extends StatelessWidget {
   Duration get loginTime => Duration(milliseconds: 1050);
   String? userID;
-  String? employeeName;
+  String? employeeName,profilePicture;
   bool isLoginSuccess = false;
   String loginMessage = '';
 
@@ -38,6 +38,7 @@ class LoginScreen extends StatelessWidget {
     } else if (productData['data'] != null) {
        userID='${productData['data']['_id']}'.toString();
        employeeName= '${productData['data']['first_name']} ${productData['data']['last_name']}'.toString();
+       profilePicture=productData['data']['profilePicture'];
       print('=============>>>>>>>>>$userID');
       print('=============>>>>>>>>>$employeeName');
 
@@ -86,7 +87,7 @@ class LoginScreen extends StatelessWidget {
 
         Future.delayed(Duration(seconds: 0),(){
           Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => Home(userID!,employeeName!),
+            builder: (context) => Home(userID!,employeeName!,profilePicture!),
           ));
         });
 
