@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_login/flutter_login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 import 'Home.dart';
@@ -20,6 +21,7 @@ class LoginScreen extends StatelessWidget {
   Future<String> _authUser(LoginData data) async {
     var baseUrl = 'http://44.203.240.206:5000/user/signin';
     var url = Uri.parse(baseUrl);
+    SharedPreferences pref = await SharedPreferences.getInstance();
 
     var response = await http.post(url,
         body: json.encode(
@@ -45,8 +47,18 @@ class LoginScreen extends StatelessWidget {
       userID.toString();
       employeeName.toString();
       isLoginSuccess = true;
+       pref.setBool('isLoggedIn', true);
+       pref.setString('username', employeeName??'empty');
+       pref.setString('id', userID??"empty");
+       pref.setString('profilePicture', profilePicture??'empty');
+
+
     } else {
+      SharedPreferences pref = await SharedPreferences.getInstance();
+      pref.setBool('isLoggedIn', false);
+
       loginMessage = productData['message'];
+      pref.setBool('isLoggedIn', false);
 
     }
     return Future.delayed(loginTime).then((_) {

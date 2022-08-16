@@ -3,6 +3,8 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:veton/Home.dart';
 import 'Login.dart';
 import 'Model/LoacleCallModel.dart';
 
@@ -17,8 +19,34 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isLoggedIn=false;
+  String? name,id,pic;
+  @override
+  void initState() {
+    isUserLoggedIn().then((value) => {
+      isLoggedIn=value
+    });
+    super.initState();
+  }
+
+  Future<bool> isUserLoggedIn()async{
+    SharedPreferences pref = await SharedPreferences.getInstance();
+bool value = pref.getBool('isLoggedIn')??false;
+   name= pref.getString('username')??'empty';
+    id= pref.getString('id')??'empty';
+    pic= pref.getString('pic')??'empty';
+
+
+    return value;
+  }
 
   // This widget is the root of your application.
   @override
@@ -29,7 +57,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: LoginScreen(),
+      home:isLoggedIn?Home(id!, name!, pic!): LoginScreen(),
     );
   }
 }
