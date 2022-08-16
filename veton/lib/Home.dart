@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:hive/hive.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,10 +13,11 @@ import 'package:veton/ClientModel.dart';
 import 'package:veton/Model/CallModel.dart';
 import 'package:veton/Model/LoacleCallModel.dart';
 import 'package:call_log/call_log.dart';
-import 'package:intl/intl.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  String userID,name,profilePicture;
+
+  Home(this.userID,this.name,this.profilePicture);
 
   @override
   State<Home> createState() => _HomeState();
@@ -25,7 +25,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
+  GlobalKey<RefreshIndicatorState>();
   String tabIndicator = 'Assigned Leads';
   int currentIndex=0;
   bool hasInternet = false;
@@ -44,12 +44,16 @@ class _HomeState extends State<Home> {
     Iterable<CallLogEntry> entries = await CallLog.get();
     var singleCallLog = entries.first;
     List<LocalStorageCalls> sendingList = [];
+    List<CallModel> sendingCallList = [];
+
     bool isVerified = false;
     String clientNum = preferences.getString('ClientPhoneNo') ?? '0';
-    String employeeID = preferences.getString('employeeID') ?? 'saad1234DummyID';
+    String employeeID = widget.userID;
     String duration = singleCallLog.duration.toString();
     String clientID = preferences.getString('clientID') ?? '0';
-    String completeNum = '0$clientNum';
+    String completeNum = '$clientNum';
+    print('================0000000??????${employeeID}');
+    print('================0000000??????${clientID}');
 
     if (singleCallLog.number.toString() == completeNum) {
       singleCallLog.duration! >= 20 ? isVerified = true : isVerified = false;
@@ -58,28 +62,32 @@ class _HomeState extends State<Home> {
         ..isVerified = isVerified
         ..totalLength = duration
         ..employeeId = employeeID;
+      var callRec=CallModel(totalLength: duration, isVerified: isVerified, from: employeeID, to: clientID);
 
       sendingList.add(tempCallData);
-      dataManagingBlock(sendingList);
+      sendingCallList.add(callRec);
+      dataManagingBlock(sendingCallList);
     } else {
       return;
     }
   }
 
-  void dataManagingBlock(List<LocalStorageCalls> listOfCalls) {
+  void dataManagingBlock(List<CallModel> listOfCalls) async{
     if (hasInternet) {
       sendDataToServer(listOfCalls);
     } else {
-      print('========================================>>>>>>>>>>>>>Data localy saved interner nae ha');
+      SharedPreferences preferences = await SharedPreferences.getInstance();
+      preferences.setBool('IsDataStoredInDB', true);
       var singleCallData = listOfCalls.first;
+
       addCallDataToDB(singleCallData.totalLength, singleCallData.isVerified,
-          singleCallData.clientId, singleCallData.employeeId);
+          singleCallData.to, singleCallData.from);
     }
   }
 
-  String formatDate(DateTime dt) {
-    return DateFormat('d-MMM-y H:m:s').format(dt);
-  }
+  // String formatDate(DateTime dt) {
+  //   return DateFormat('d-MMM-y H:m:s').format(dt);
+  // }
 
   String getTime(int duration) {
     Duration d1 = Duration(seconds: duration);
@@ -104,10 +112,10 @@ class _HomeState extends State<Home> {
       leadList.clear();
       searchLeadList.clear();
     });
-    var baseUrl = 'http://44.203.240.206:5000/lead/mobile?assignedto=';
-    var url = Uri.parse('$baseUrl+6289ec2a894e709193eb14e9');
+    var baseUrl = 'http://44.203.240.206:5000/lead/mobile?assignedTo=';
+    var url = Uri.parse('$baseUrl${widget.userID}');
     var response =
-        await http.get(url, headers: {"content-type": "application/json"});
+    await http.get(url, headers: {"content-type": "application/json"});
 
     var productData = jsonDecode(response.body);
     if (response.statusCode != 200) {
@@ -131,24 +139,32 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<bool> sendDataToServer(List<LocalStorageCalls> callsData) async {
-    SharedPreferences pref = await SharedPreferences.getInstance();
-    var to=pref.getString('to');
+  Future<bool> sendDataToServer(List<dynamic> callsData) async {
+
     var baseUrl = 'http://44.203.240.206:5000/call';
     var url = Uri.parse(baseUrl);
+    CallModel callRec;
     List<CallModel> list = [];
-    var callData = callsData.first;
-    var callRec = CallModel(
-        totalLength: callData.totalLength,
-        employeeId: callData.employeeId,
-        clientId:'62b7624c4a3be4c69a4529e6', //callData.clientId,
-        isVerified: callData.isVerified,
-        to:'62b7624c4a3be4c69a4529e6',//to!,
-        from:'62c4439cdeb2478711019c90' //callData.employeeId
-    );
-    print(callRec.to);
-    print(callRec.from);
-    list.add(callRec);
+
+
+    callsData.map((e) => {
+callRec = CallModel(
+totalLength: e.totalLength,
+isVerified: e.isVerified,
+to:e.to,
+from: e.from
+),
+    list.add(callRec),
+}) .toList()  ;
+
+    // var e=callsData.first;
+    // callRec = CallModel(
+    //     totalLength: e.totalLength,
+    //     isVerified: e.isVerified,
+    //     to:e.to,
+    //     from: e.from
+    // );
+  // list.add(callRec);
     var response = await http.post(url,
         body: json.encode(list),
         headers: {"content-type": "application/json"});
@@ -165,7 +181,48 @@ class _HomeState extends State<Home> {
       return true;
     }
   }
+  Future<bool> sendDataLocaleToServer(List<dynamic> callsData) async {
 
+    var baseUrl = 'http://44.203.240.206:5000/call';
+    var url = Uri.parse(baseUrl);
+    CallModel callRec;
+    List<CallModel> list = [];
+
+
+    callsData.map((e) => {
+      callRec = CallModel(
+          totalLength: e.totalLength,
+          isVerified: e.isVerified,
+          to:e.clientId,
+          from: e.employeeId
+      ),
+      list.add(callRec),
+    }) .toList()  ;
+
+    // var e=callsData.first;
+    // callRec = CallModel(
+    //     totalLength: e.totalLength,
+    //     isVerified: e.isVerified,
+    //     to:e.to,
+    //     from: e.from
+    // );
+    // list.add(callRec);
+    var response = await http.post(url,
+        body: json.encode(list),
+        headers: {"content-type": "application/json"});
+
+    if (response.statusCode != 200) {
+      print('errpr ha');
+
+      print(response.body);
+      return false;
+    } else {
+      print('errpr nae');
+      print(response.body);
+
+      return true;
+    }
+  }
   ///.... save calls data to locale DB and get data from locale DB
   Future addCallDataToDB(String totalLength, bool isVerified, String clientIds,
       String employeeIds) async {
@@ -205,7 +262,7 @@ class _HomeState extends State<Home> {
   void showConnectivitySnackBar(ConnectivityResult result) async {
     List<LocalStorageCalls> fetchedDBList = [];
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    bool dBHasData = preferences.getBool('IsDataStoredInDB') ?? true;
+    bool dBHasData = preferences.getBool('IsDataStoredInDB') ?? false;
 
     hasInternet = result != ConnectivityResult.none;
     final message = hasInternet
@@ -215,9 +272,10 @@ class _HomeState extends State<Home> {
     if (hasInternet && dBHasData) {
       print('data in db===========>$dBHasData');
       fetchedDBList = await getCallsFromDB();
-      sendDataToServer(fetchedDBList);
-       var box = Boxes.getTransactions();
+      sendDataLocaleToServer(fetchedDBList);
+      var box = Boxes.getTransactions();
       box.clear();
+      preferences.setBool('IsDataStoredInDB', false);
     } else {
       print('no data in db');
     }
@@ -246,7 +304,7 @@ class _HomeState extends State<Home> {
             getCallLogs();
 
             showDialog(
-             // barrierColor: Colors.grey[100],
+              // barrierColor: Colors.grey[100],
               barrierDismissible: false,
               context: context,
               builder: (ctx) {
@@ -269,24 +327,24 @@ class _HomeState extends State<Home> {
                       width: 30,
                       child: Center(
                           child: Column(
-                        children: [
-                          const Text(
-                            "Uploading Your Call",
-                            style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueAccent),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                              height: 40,
-                              width: 40,
-                              child: const CircularProgressIndicator(
-                                color: Colors.blueAccent,
-                                backgroundColor: Colors.deepPurpleAccent,
-                              )),
-                        ],
-                      ))),
+                            children: [
+                              const Text(
+                                "Uploading Your Call",
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blueAccent),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                  height: 40,
+                                  width: 40,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.blueAccent,
+                                    backgroundColor: Colors.deepPurpleAccent,
+                                  )),
+                            ],
+                          ))),
                 );
               },
             );
@@ -368,14 +426,16 @@ class _HomeState extends State<Home> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const CircleAvatar(
+                             CircleAvatar(
+
                               radius: 39,
-                              backgroundImage: NetworkImage(
-                                  ('https://www.w3schools.com/howto/img_avatar.png')),
+                              backgroundImage:widget.profilePicture.isEmpty? NetworkImage(
+                                  'https://www.w3schools.com/howto/img_avatar.png'):NetworkImage(widget.profilePicture.toString()),
                             ),
                             InkWell(
                                 onTap: () async {
-                                  getCallLogs();
+                                  // SharedPreferences p = await SharedPreferences.getInstance();
+                                  // p.setBool('IsDataStoredInDB', false);
                                 },
                                 child: Column(
                                   children: [
@@ -393,22 +453,30 @@ class _HomeState extends State<Home> {
                                             ),
                                           ],
                                           shape: BoxShape.circle),
-                                      child: const Icon(
-                                        Icons.power_settings_new,
-                                        size: 30,
-                                        color: Colors.red,
+                                      child: InkWell(
+                                        onTap: (){
+                                          exit(0);
+                                        },
+                                        child: const Icon(
+                                          Icons.power_settings_new,
+                                          size: 30,
+                                          color: Colors.red,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ))
                           ],
                         ),
-                        const Text(
-                          'sssssss',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 24,
-                              color: Colors.white),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0,top: 5),
+                          child: Text(
+                            '${widget.name}',textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Colors.white),
+                          ),
                         ),
                         const Spacer(),
                         Text(
@@ -438,7 +506,7 @@ class _HomeState extends State<Home> {
                           child: Column(
                             children: [
                               TabBar(
-                                 indicatorPadding: EdgeInsets.only(top: 10),
+                                indicatorPadding: EdgeInsets.only(top: 10),
                                 onTap: (index){
                                   setState(() {
                                     currentIndex=index;
@@ -453,7 +521,7 @@ class _HomeState extends State<Home> {
                                     color: Colors.blueAccent,
                                     fontSize: 17),
                                 indicatorSize: TabBarIndicatorSize.tab,
-isScrollable: false,
+                                isScrollable: false,
 
                                 tabs: [
                                   Tab(
@@ -466,110 +534,119 @@ isScrollable: false,
                               ),
                               Container(
                                 height:
-                                    MediaQuery.of(context).size.height * 0.60,
+                                MediaQuery.of(context).size.height * 0.60,
                                 width: double.infinity,
                                 child: TabBarView(
                                   children: [
-                                    SingleChildScrollView(
-                                      child: Column(
-                                        children: [
-                                          const SizedBox(
-                                            height: 15,
-                                          ),
-                                          // Container(
-                                          //
-                                          //     width: MediaQuery.of(context)
-                                          //             .size
-                                          //             .width *
-                                          //         0.70,
-                                          //     decoration: BoxDecoration(
-                                          //         color: Colors.grey[300],
-                                          //         borderRadius:
-                                          //             BorderRadius.circular(
-                                          //                 30)),
-                                          //     child: Padding(
-                                          //       padding: const EdgeInsets.only(
-                                          //           left: 18.0),
-                                          //       child: TextField(
-                                          //         controller: searchController,
-                                          //         decoration: InputDecoration(
-                                          //           prefixIcon: const Icon(
-                                          //               Icons.search),
-                                          //           suffixIcon: GestureDetector(
-                                          //               onTap: () {
-                                          //                 setState(() {
-                                          //                   searchLeadList = leadList;
-                                          //                   searchController
-                                          //                       .clear();
-                                          //                 });
-                                          //               },
-                                          //               child: const Icon(
-                                          //                   Icons.close)),
-                                          //           border: InputBorder.none,
-                                          //         ),
-                                          //         onChanged: searchLead,
-                                          //       ),
-                                          //     )),
-                                          const SizedBox(
-                                            height: 20,
-                                          ),
-                                          Container(
-                                              height: MediaQuery.of(context)
-                                                      .size
-                                                      .height *
-                                                  0.61,
+                                    Column(
+                                      children: [
+                                        const SizedBox(
+                                          height: 15,
+                                        ),
+                                        // Container(
+                                        //
+                                        //     width: MediaQuery.of(context)
+                                        //             .size
+                                        //             .width *
+                                        //         0.70,
+                                        //     decoration: BoxDecoration(
+                                        //         color: Colors.grey[300],
+                                        //         borderRadius:
+                                        //             BorderRadius.circular(
+                                        //                 30)),
+                                        //     child: Padding(
+                                        //       padding: const EdgeInsets.only(
+                                        //           left: 18.0),
+                                        //       child: TextField(
+                                        //         controller: searchController,
+                                        //         decoration: InputDecoration(
+                                        //           prefixIcon: const Icon(
+                                        //               Icons.search),
+                                        //           suffixIcon: GestureDetector(
+                                        //               onTap: () {
+                                        //                 setState(() {
+                                        //                   searchLeadList = leadList;
+                                        //                   searchController
+                                        //                       .clear();
+                                        //                 });
+                                        //               },
+                                        //               child: const Icon(
+                                        //                   Icons.close)),
+                                        //           border: InputBorder.none,
+                                        //         ),
+                                        //         onChanged: searchLead,
+                                        //       ),
+                                        //     )),
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        Expanded(
+                                          child: Container(
+                                            // height: MediaQuery.of(context)
+                                            //         .size
+                                            //         .height *
+                                            //     0.61,
                                               child: RefreshIndicator(
                                                 key: _refreshIndicatorKey,
                                                 onRefresh: () async {
+                                                  const snackBar = SnackBar(
+                                                    content: Text('No Internet'),
+                                                  );
                                                   leadList.clear();
                                                   searchLeadList.clear();
-                                                  getLeads();
+                                                 hasInternet? getLeads():
+
+
+// Find the ScaffoldMessenger in the widget tree
+// and use it to show a SnackBar.
+                                                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                                  ;
                                                 },
                                                 child: loading
                                                     ? Center(
-                                                        child: Container(
-                                                            height: 30,
-                                                            width: 30,
-                                                            child:
-                                                                const CircularProgressIndicator()))
+                                                    child: Container(
+                                                        height: 30,
+                                                        width: 30,
+                                                        child:
+                                                        const CircularProgressIndicator()))
                                                     : ListView.builder(
-                                                        itemCount:
-                                                            leadList
-                                                                .length,
-                                                        itemBuilder:
-                                                            (BuildContext
-                                                                    context,
-                                                                int index) {
-                                                          return Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                        .symmetric(
-                                                                    horizontal:
-                                                                        18.0,
-                                                                    vertical:
-                                                                        10),
-                                                            child: LeadTile(
-                                                              name: leadList[
-                                                                      index]
-                                                                  .name,
-                                                              number: leadList[
-                                                                      index]
-                                                                  .number,
-                                                              intrestedIn:
-                                                                  leadList[
-                                                                          index]
-                                                                      .projectName,
-                                                              id: leadList[index].id,
-                                                            ),
-                                                          );
-                                                        }),
+                                                    itemCount:
+                                                    leadList
+                                                        .length,
+                                                    itemBuilder:
+                                                        (BuildContext
+                                                    context,
+                                                        int index) {
+                                                      return Padding(
+                                                        padding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                            horizontal:
+                                                            18.0,
+                                                            vertical:
+                                                            10),
+                                                        child: LeadTile(
+                                                          name: leadList[
+                                                          index]
+                                                              .name,
+                                                          number: leadList[
+                                                          index]
+                                                              .number,
+                                                          intrestedIn:
+                                                          leadList[
+                                                          index]
+                                                              .projectName,
+                                                          id: leadList[index].id,
+                                                        ),
+                                                      );
+                                                    }),
                                               )
 
-                                              ),
-                                        ],
-                                      ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const Icon(Icons.directions_transit),
+                                    Center(child: const Text('Module Disable',style: TextStyle(fontSize: 17 ,fontWeight: FontWeight.w700,color: Colors.red),)),
                                   ],
                                 ),
                               )
@@ -595,7 +672,6 @@ class LeadTile extends StatefulWidget {
 }
 
 class _LeadTileState extends State<LeadTile> {
-  late AndroidIntent intent;
 
   @override
   void initState() {
@@ -643,7 +719,7 @@ class _LeadTileState extends State<LeadTile> {
                     const SizedBox(
                       height: 5,
                     ),
-                    Text('+92${widget.number}',
+                    Text(widget.number,
                         style: const TextStyle(color: Colors.green)),
                     const SizedBox(
                       height: 5,
@@ -658,12 +734,12 @@ class _LeadTileState extends State<LeadTile> {
                       onTap: () async {
                         SharedPreferences pref = await SharedPreferences.getInstance();
                         pref.setString('ClientPhoneNo', widget.number);
-                        pref.setString('clientID', "62b7624c4a3be4c69a4529e6");
-                        pref.setString('employee', '62c4439cdeb2478711019c90');
+                        pref.setString('clientID', widget.id);
+                        // pref.setString('to', widget.name);
 
                         // launch('tel://03131533387'),
                         await Permission.phone.request();
-                        var completeNum = '0${widget.number}';
+                        var completeNum = widget.number;
                         await FlutterPhoneDirectCaller.callNumber(completeNum);
 
                         // LaunchCall(widget.number),
@@ -688,9 +764,9 @@ class LeadModel {
 
   LeadModel(
       {required this.number,
-      required this.name,
-      required this.id,
-      required this.projectName});
+        required this.name,
+        required this.id,
+        required this.projectName});
 }
 
 class Boxes {
