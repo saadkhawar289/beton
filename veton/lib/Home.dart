@@ -430,7 +430,7 @@ from: e.from
 
   @override
   void initState() {
-    getCallLogs();
+   //  getCallLogs();
     subscription =
         Connectivity().onConnectivityChanged.listen(showConnectivitySnackBar);
     setStream();
@@ -808,9 +808,9 @@ class _SearchWidgetState extends State<SearchWidget> {
 
     return Container(
       height: 42,
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16,vertical: 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(22),
         color: Colors.white,
         border: Border.all(color: Colors.black26),
       ),
