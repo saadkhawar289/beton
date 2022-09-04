@@ -55,7 +55,7 @@ class LoginScreen extends StatelessWidget {
        pref.setBool('isLoggedIn', true);
        pref.setString('username', employeeName??'empty');
        pref.setString('id', userID??"empty");
-       pref.setString('profilePicture', profilePicture??'empty');
+       pref.setString('profilePicture', profilePicture??'https://www.w3schools.com/howto/img_avatar.png');
        pref.setString('role', role??'empty');
        pref.setString('crmCode', crmCode??'empty');
        pref.setString('phone', phoneNo??'empty');

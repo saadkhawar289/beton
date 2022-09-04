@@ -318,7 +318,7 @@ from: e.from
                   Navigator.of(context).pop();
                 });
                 return AlertDialog(
-                  insetPadding: EdgeInsets.all(40),
+                  insetPadding: const EdgeInsets.all(40),
 
                   elevation: 100,
                   shape: const RoundedRectangleBorder(
@@ -473,7 +473,7 @@ from: e.from
                              CircleAvatar(
 
                               radius: 39,
-                              backgroundImage:widget.profilePicture.isEmpty? NetworkImage(
+                              backgroundImage:widget.profilePicture.isEmpty? const NetworkImage(
                                   'https://www.w3schools.com/howto/img_avatar.png'):NetworkImage(widget.profilePicture.toString()),
                             ),
                             InkWell(
@@ -489,9 +489,9 @@ from: e.from
                                       decoration: BoxDecoration(
                                           color: Colors.white,
                                           boxShadow: [
-                                            BoxShadow(
+                                            const BoxShadow(
                                               color: Colors.grey,
-                                              offset: const Offset(0.0, 0.0),
+                                              offset: Offset(0.0, 0.0),
                                               blurRadius: 9.0,
                                               spreadRadius: 4.0,
                                             ),
@@ -516,7 +516,7 @@ from: e.from
                           padding: const EdgeInsets.only(left: 8.0,top: 5),
                           child: Text(
                             '${widget.name}',textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
                                 color: Colors.white),
@@ -525,7 +525,7 @@ from: e.from
                         const Spacer(),
                         Text(
                           tabIndicator,
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 24,
                               color: Colors.white),
@@ -550,17 +550,17 @@ from: e.from
                           child: Column(
                             children: [
                               TabBar(
-                                indicatorPadding: EdgeInsets.only(top: 10),
+                                indicatorPadding: const EdgeInsets.only(top: 10),
                                 onTap: (index){
                                   setState(() {
                                     currentIndex=index;
                                     tabIndicator=currentIndex==0?'Assigned Leads':'Profile';
                                   });
                                 },
-                                labelPadding: EdgeInsets.only(top: 10),
+                                labelPadding: const EdgeInsets.only(top: 10),
                                 unselectedLabelColor: Colors.grey,
                                 labelColor: Colors.blueAccent,
-                                labelStyle: TextStyle(
+                                labelStyle: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.blueAccent,
                                     fontSize: 17),
@@ -568,10 +568,10 @@ from: e.from
                                 isScrollable: false,
 
                                 tabs: [
-                                  Tab(
+                                  const Tab(
                                     text: 'Assigned Leads',
                                   ),
-                                  Tab(
+                                  const Tab(
                                     text: 'Profile',
                                   ),
                                 ],
@@ -663,11 +663,11 @@ from: e.from
                                        child: Column(
                                          crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text('Full Name',style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
+                                          const Text('Full Name',style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
                                           InkWell(
                                             onTap: (){
-                                        var      snackBar = SnackBar(
-                                                content: Text('Only Admin can edit info'),
+                                        var      snackBar = const SnackBar(
+                                                content: const Text('Only Admin can edit info'),
                                               );
                                               ScaffoldMessenger.of(context).showSnackBar(snackBar);
                                             },
@@ -687,12 +687,12 @@ from: e.from
                                             ),
                                             ),
                                           ),
-                                          SizedBox(height: 15,),
-                                          Text('Role',style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
+                                          const SizedBox(height: 15,),
+                                          const Text('Role',style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
                                           InkWell(
                                             onTap: (){
-                                              var      snackBar = SnackBar(
-                                                content: Text('Only Admin can edit info'),
+                                              var      snackBar = const SnackBar(
+                                                content: const Text('Only Admin can edit info'),
                                               );
                                               ScaffoldMessenger.of(context).showSnackBar(snackBar);
                                             },
@@ -713,11 +713,11 @@ from: e.from
 
                                             ),
                                           ),
-                                          SizedBox(height: 15,),
-                                          Text('CRM Code',style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
+                                          const SizedBox(height: 15,),
+                                          const Text('CRM Code',style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
                                           InkWell(
                                             onTap: (){
-                                              var      snackBar = SnackBar(
+                                              var      snackBar = const SnackBar(
                                                 content: Text('Only Admin can edit info'),
                                               );
                                               ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -739,11 +739,11 @@ from: e.from
 
                                             ),
                                           ),
-                                          SizedBox(height: 15,),
-                                          Text('Phone Number',style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
+                                          const SizedBox(height: 15,),
+                                          const Text('Phone Number',style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
                                           InkWell(
                                             onTap: (){
-                                              var      snackBar = SnackBar(
+                                              var      snackBar = const SnackBar(
                                                 content: Text('Only Admin can edit info'),
                                               );
                                               ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -916,8 +916,8 @@ class _SearchWidgetState extends State<SearchWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final styleActive = TextStyle(color: Colors.black);
-    final styleHint = TextStyle(color: Colors.black54);
+    final styleActive = const TextStyle(color: Colors.black);
+    final styleHint = const TextStyle(color: Colors.black54);
     final style = widget.text.isEmpty ? styleHint : styleActive;
 
     return Container(
