@@ -42,7 +42,7 @@ class _MyAppState extends State<MyApp> {
 bool value = pref.getBool('isLoggedIn')??false;
    name= pref.getString('username')??'empty';
     id= pref.getString('id')??'empty';
-    pic= pref.getString('pic')??'empty';
+    pic= pref.getString('profilePicture')??'https://www.w3schools.com/howto/img_avatar.png';
     role= pref.getString('role')??'empty';
     code= pref.getString('crmCode')??'empty';
     number= pref.getString('phone')??'empty';
