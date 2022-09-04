@@ -15,9 +15,9 @@ import 'package:veton/Model/LoacleCallModel.dart';
 import 'package:call_log/call_log.dart';
 
 class Home extends StatefulWidget {
-  String userID,name,profilePicture;
+  String userID,name,profilePicture,crmCode,phone,role;
 
-  Home(this.userID,this.name,this.profilePicture);
+  Home(this.userID,this.name,this.profilePicture,this.phone,this.role,this.crmCode);
 
   @override
   State<Home> createState() => _HomeState();
@@ -38,6 +38,11 @@ class _HomeState extends State<Home> {
   bool loading = true;
   PhoneStateStatus status = PhoneStateStatus.NOTHING;
   bool granted = false;
+
+
+  TextEditingController fullName = TextEditingController();
+
+
 
   void getCallLogs() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
@@ -112,7 +117,7 @@ class _HomeState extends State<Home> {
       leadList.clear();
       searchLeadList.clear();
     });
-    var baseUrl = 'http://44.203.240.206:5000/lead/mobile?assignedTo=';
+    var baseUrl = 'http://3.91.209.143:5000/lead/mobile?assignedTo=';
     var url = Uri.parse('$baseUrl${widget.userID}');
     var response =
     await http.get(url, headers: {"content-type": "application/json"});
@@ -141,7 +146,7 @@ class _HomeState extends State<Home> {
 
   Future<bool> sendDataToServer(List<dynamic> callsData) async {
 
-    var baseUrl = 'http://44.203.240.206:5000/call';
+    var baseUrl = 'http://3.91.209.143:5000/call';
     var url = Uri.parse(baseUrl);
     CallModel callRec;
     List<CallModel> list = [];
@@ -183,7 +188,7 @@ from: e.from
   }
   Future<bool> sendDataLocaleToServer(List<dynamic> callsData) async {
 
-    var baseUrl = 'http://44.203.240.206:5000/call';
+    var baseUrl = 'http://3.91.209.143:5000/call';
     var url = Uri.parse(baseUrl);
     CallModel callRec;
     List<CallModel> list = [];
@@ -549,7 +554,7 @@ from: e.from
                                 onTap: (index){
                                   setState(() {
                                     currentIndex=index;
-                                    tabIndicator=currentIndex==0?'Assigned Leads':'Edit Profile';
+                                    tabIndicator=currentIndex==0?'Assigned Leads':'Profile';
                                   });
                                 },
                                 labelPadding: EdgeInsets.only(top: 10),
@@ -567,7 +572,7 @@ from: e.from
                                     text: 'Assigned Leads',
                                   ),
                                   Tab(
-                                    text: 'Edit Profile',
+                                    text: 'Profile',
                                   ),
                                 ],
                               ),
@@ -652,7 +657,116 @@ from: e.from
                                         ),
                                       ],
                                     ),
-                                    Center(child: const Text('Module Disable',style: TextStyle(fontSize: 17 ,fontWeight: FontWeight.w700,color: Colors.red),)),
+
+                                     Padding(
+                                       padding: const EdgeInsets.all(18.0),
+                                       child: Column(
+                                         crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text('Full Name',style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
+                                          InkWell(
+                                            onTap: (){
+                                        var      snackBar = SnackBar(
+                                                content: Text('Only Admin can edit info'),
+                                              );
+                                              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                            },
+                                            child: Container(
+                                              height: 42,
+                                              width: double.infinity,
+
+                                              margin: const EdgeInsets.symmetric(horizontal: 0,vertical: 10),
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(22),
+                                                color: Colors.white,
+                                                border: Border.all(color: Colors.blue),
+                                              ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(12.0),
+                                              child: Text(widget.name),
+                                            ),
+                                            ),
+                                          ),
+                                          SizedBox(height: 15,),
+                                          Text('Role',style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
+                                          InkWell(
+                                            onTap: (){
+                                              var      snackBar = SnackBar(
+                                                content: Text('Only Admin can edit info'),
+                                              );
+                                              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                            },
+                                            child: Container(
+                                                height: 42,
+                                              width: double.infinity,
+
+                                              margin: const EdgeInsets.symmetric(horizontal: 0,vertical: 10),
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(22),
+                                                  color: Colors.white,
+                                                  border: Border.all(color: Colors.blue),
+                                                ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(12.0),
+                                                child: Text(widget.crmCode),
+                                              ),
+
+                                            ),
+                                          ),
+                                          SizedBox(height: 15,),
+                                          Text('CRM Code',style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
+                                          InkWell(
+                                            onTap: (){
+                                              var      snackBar = SnackBar(
+                                                content: Text('Only Admin can edit info'),
+                                              );
+                                              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                            },
+                                            child: Container(
+                                                height: 42,
+                                              width: double.infinity,
+
+                                              margin: const EdgeInsets.symmetric(horizontal: 0,vertical: 10),
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(22),
+                                                  color: Colors.white,
+                                                  border: Border.all(color: Colors.blue),
+                                                ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(12.0),
+                                                child: Text(widget.phone),
+                                              ),
+
+                                            ),
+                                          ),
+                                          SizedBox(height: 15,),
+                                          Text('Phone Number',style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
+                                          InkWell(
+                                            onTap: (){
+                                              var      snackBar = SnackBar(
+                                                content: Text('Only Admin can edit info'),
+                                              );
+                                              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                            },
+                                            child: Container(
+                                                height: 42,
+                                                width: double.infinity,
+                                                margin: const EdgeInsets.symmetric(horizontal: 0,vertical: 10),
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(22),
+                                                  color: Colors.white,
+                                                  border: Border.all(color: Colors.blue),
+                                                ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(12.0),
+                                                child: Text(widget.role),
+                                              ),
+
+                                            ),
+                                          ),
+                                        ],
+                                    ),
+                                     )
                                   ],
                                 ),
                               )

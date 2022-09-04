@@ -28,7 +28,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool isLoggedIn=false;
-  String? name,id,pic;
+  String? name,id,pic,code,role,number;
   @override
   void initState() {
     isUserLoggedIn().then((value) => {
@@ -43,6 +43,10 @@ bool value = pref.getBool('isLoggedIn')??false;
    name= pref.getString('username')??'empty';
     id= pref.getString('id')??'empty';
     pic= pref.getString('pic')??'empty';
+    role= pref.getString('role')??'empty';
+    code= pref.getString('crmCode')??'empty';
+    number= pref.getString('phone')??'empty';
+
 
 
     return value;
@@ -57,7 +61,7 @@ bool value = pref.getBool('isLoggedIn')??false;
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home:isLoggedIn?Home(id!, name!, pic!): LoginScreen(),
+      home:isLoggedIn?Home(id!, name!, pic!,role!,code!,number!): LoginScreen(),
     );
   }
 }

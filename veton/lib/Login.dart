@@ -13,13 +13,13 @@ final users = {'ss@ss.com': '12345'};
 
 class LoginScreen extends StatelessWidget {
   Duration get loginTime => Duration(milliseconds: 1050);
-  String? userID;
+  String? userID,crmCode,phoneNo,role;
   String? employeeName,profilePicture;
   bool isLoginSuccess = false;
   String loginMessage = '';
 
   Future<String> _authUser(LoginData data) async {
-    var baseUrl = 'http://44.203.240.206:5000/user/signin';
+    var baseUrl = 'http://3.91.209.143:5000/user/signin';
     var url = Uri.parse(baseUrl);
     SharedPreferences pref = await SharedPreferences.getInstance();
 
@@ -39,6 +39,11 @@ class LoginScreen extends StatelessWidget {
       loginMessage = productData['message'];
     } else if (productData['data'] != null) {
        userID='${productData['data']['_id']}'.toString();
+        role='${productData['data']['role']}'.toString();
+    crmCode='${productData['data']['crm_code']}'.toString();
+        phoneNo='${productData['data']['phone']}'.toString();
+
+
        employeeName= '${productData['data']['first_name']} ${productData['data']['last_name']}'.toString();
        profilePicture=productData['data']['profilePicture'];
       print('=============>>>>>>>>>$userID');
@@ -51,6 +56,9 @@ class LoginScreen extends StatelessWidget {
        pref.setString('username', employeeName??'empty');
        pref.setString('id', userID??"empty");
        pref.setString('profilePicture', profilePicture??'empty');
+       pref.setString('role', role??'empty');
+       pref.setString('crmCode', crmCode??'empty');
+       pref.setString('phone', phoneNo??'empty');
 
 
     } else {
@@ -99,7 +107,7 @@ class LoginScreen extends StatelessWidget {
 
         Future.delayed(Duration(seconds: 0),(){
           Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => Home(userID!,employeeName!,profilePicture!),
+            builder: (context) => Home(userID!,employeeName!,profilePicture!,crmCode!,phoneNo!,role!),
           ));
         });
 
